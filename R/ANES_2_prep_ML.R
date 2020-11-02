@@ -16,13 +16,16 @@ anes_list <- anes %>%
   `names<-`({.} %>% map(~ .x$VCF0004[1]) %>% unlist())
 
 # Routine one-hot encoding =====================================================
-anes_onehot <- anes_list[as.character(seq(1948, 2016, by = 4))] %>%
+anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
   ## ANES does not have prez vote if not midterm year
   map(
     ~ data_routine(
       ## Delete almost-identical variables
       .x %>% 
         zap_labels() %>%
+        ## Because otherwise missing variables will be coded 999
+        ## 2,340 out of 59,944 cases
+        filter(!is.na(VCF0704a)) %>%
         select(
           -VCF0704, -VCF0705, -VCF0706, ## Prez vote (why so many vars?)
           -VCF0734, ## Intended prez vote vs. actual prez vote
@@ -37,7 +40,7 @@ anes_onehot <- anes_list[as.character(seq(1948, 2016, by = 4))] %>%
       dep = "VCF0704a", 
       lvl = c(1, 2), 
       lbl = c("DemCand", "RepCand"),
-      dbl = NULL
+      dbl = c("VCF0101") ## age
     ) %>%
       train_name_clean()
   )
