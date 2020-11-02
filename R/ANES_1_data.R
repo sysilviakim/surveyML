@@ -67,6 +67,8 @@ vl <- list(
     filter(!grepl("major part|church|eligible|helpful", tolower(label))) %>%
     filter(!grepl("constituent|likely|cooperative|trusted", tolower(label))) %>%
     filter(!grepl("gave money|does working", tolower(label))) %>%
+    ## This excludes "Government Should Ensure Fair Jobs for Blacks"
+    filter(!grepl("blacks ", tolower(label))) %>%
     .$var
   ## c(
   ##   which(anes_labels$var == "VCF0805"):which(anes_labels$var == "VCF0894"),
