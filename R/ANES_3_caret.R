@@ -3,7 +3,7 @@ load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 load(file.path("data", "anes-tidy", "anes-vl.RData"))
 
 sfx <- "prezvote"
-for (yr in as.character(seq(1948, 2016, by = 4))) {
+for (yr in as.character(seq(1952, 2016, by = 4))) {
   for (varset in seq(4)) {
     temp <- anes_onehot[[as.character(yr)]]
     
