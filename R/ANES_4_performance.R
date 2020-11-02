@@ -6,7 +6,10 @@ load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 perf <- list()
 vid <- list()
 
-for (yr in as.character(seq(1948, 2016, by = 4))) {
+## It turns out that 7-pt party ID is missing for 1948
+## See table(anes$VCF0301, anes$VCF0004)
+## So exclude 1948
+for (yr in as.character(seq(1952, 2016, by = 4))) {
   sfx <- "prezvote"
   temp <- anes_onehot[[as.character(yr)]]
 
@@ -37,7 +40,7 @@ for (yr in as.character(seq(1948, 2016, by = 4))) {
           "fig", "ANES", method,
           paste0("var", method, "_", yr, "_", sfx, "_st", varset, ".pdf")
         ),
-        labels = vl[[paste0("var", substr(yr, 3, 4))]],
+        labels = vl[["anes"]],
         font = "CM Roman"
       )
       
@@ -62,7 +65,7 @@ for (yr in as.character(seq(1948, 2016, by = 4))) {
 
 ## Pres Vote Choice, Random Forest =============================================
 tab <- seq(4) %>%
-  map(~ perf_summ(perf, 1, "rf", .x, yr = seq(1948, 2016, 4))) %>%
+  map(~ perf_summ(perf, 1, "rf", .x, yr = seq(1952, 2016, 4))) %>%
   bind_rows(.id = "Set") %>%
   arrange(desc(Year), Set) %>%
   mutate(
@@ -79,7 +82,7 @@ tab <- seq(4) %>%
     label = "tab:ANES_preschoice_rf",
     caption = paste0(
       "Performance Metrics, ", "Presidential Vote Choice, ",
-      "Random Forests, ", "ANES 1948--2016"
+      "Random Forests, ", "ANES 1952--2016"
     ),
     digits = c(0, 0, 0, 4, 4, 4, 4, 4, 4)
   )
