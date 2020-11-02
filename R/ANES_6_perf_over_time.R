@@ -3,7 +3,7 @@ load("output/ANES/ANES_perf.RData")
 load("output/ANES/ANES_varimp.RData")
 
 summ_df <- seq(4) %>%
-  map(~ perf_summ(perf, 1, "rf", .x, yr = seq(1948, 2016, 4))) %>%
+  map(~ perf_summ(perf, 1, "rf", .x, yr = seq(1952, 2016, 4))) %>%
   bind_rows(.id = "Set") %>%
   mutate(
     Set = factor(
@@ -22,7 +22,7 @@ po_plot <- function(x, metric) {
     )
   ) +
     geom_line(size = 1) +
-    scale_x_continuous(breaks = seq(1948, 2016, by = 4)) +
+    scale_x_continuous(breaks = seq(1952, 2016, by = 4)) +
     scale_color_viridis_d(direction = -1) + # name = "Variable Specification"
     # scale_linetype_manual(
     #   name = "Variable Specification",

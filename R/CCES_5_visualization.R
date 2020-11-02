@@ -5,7 +5,7 @@ pid_vec <- c("pid7", "V212d", "CC307a", "v3007")
 educ_vec <- c("educ", "V213")
 
 # Within-year, between-set intersection fxn ====================================
-vi_intersect <- function(x, y = 1, from = 1, to = 4, top = 20) {
+vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20) {
   x %>%
     map(y) %>%
     map("rf") %>%
@@ -27,7 +27,7 @@ vi_intersect <- function(x, y = 1, from = 1, to = 4, top = 20) {
     map(
       ~ tibble(x := .x) %>%
         t() %>%
-        as_tibble()
+        as_tibble(.name_repair = "unique")
     ) %>%
     bind_rows(.id = "Year") %>%
     mutate(Year = gsub("year", "", Year)) %>%
@@ -56,7 +56,7 @@ vi_intersect <- function(x, y = 1, from = 1, to = 4, top = 20) {
           )
         )
       )
-    )%>%
+    ) %>%
     mutate_all(
       ~ if_else(
         . %in% paste0(educ_vec, ".2"), "High school graduate",
@@ -77,7 +77,7 @@ vi_intersect <- function(x, y = 1, from = 1, to = 4, top = 20) {
 }
 
 # Between-year, within-set intersection fxn ====================================
-vi_intersect2 <- function(x, y = 1, set = 4, top = 20) {
+vi_inter_within <- function(x, y = 1, set = 4, top = 20) {
   x %>%
     map(y) %>%
     map("rf") %>%
@@ -93,49 +93,54 @@ vi_intersect2 <- function(x, y = 1, set = 4, top = 20) {
 
 # vote choice varimp intersection: tables ======================================
 ## Do demographics linger in top n?
-vi_intersect(vid, y = 1, from = 1, to = 4, top = 20) ## Nothing until top 30
-tab <- vi_intersect(
-  within(vid, rm("year2006")), y = 1, from = 1, to = 2, top = 10
+vi_inter_btw(vid, y = 1, from = 1, to = 4, top = 20) ## Nothing until top 30
+tab <- vi_inter_btw(
+  within(vid, rm("year2006")),
+  y = 1, from = 1, to = 2, top = 10
 ) %>%
   xtable(
     label = "tab:cces_vi_btw_sets_demo_1",
     caption = "Demographics Remaining Within Top 10 Variables, PID Included"
   )
 print(
-  tab, digits = 0, include.rownames = FALSE, booktabs = TRUE
+  tab,
+  digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
-tab <- vi_intersect(
-  within(vid, rm("year2006")), y = 1, from = 1, to = 3, top = 10
+tab <- vi_inter_btw(
+  within(vid, rm("year2006")),
+  y = 1, from = 1, to = 3, top = 10
 ) %>%
   xtable(
     label = "tab:cces_vi_btw_sets_demo_2",
-    caption = 
+    caption =
       "Demographics Remaining Within Top 10 Variables, PID/Issues Included"
   )
 print(
-  tab, digits = 0, include.rownames = FALSE, booktabs = TRUE
+  tab,
+  digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
 ## Between years within-set? Again, lots of manual work
-vi_intersect2(set = 1, top = 5, vid) ## Black, age, gender
-vi_intersect2(set = 2, top = 5, vid) ## Dominated by "Strong Republican"
-vi_intersect2(set = 3, top = 5, vid)
+vi_inter_within(set = 1, top = 5, vid) ## Black, age, gender
+vi_inter_within(set = 2, top = 5, vid) ## Dominated by "Strong Republican"
+vi_inter_within(set = 3, top = 5, vid)
 
 # Varimp over time fxn =========================================================
-vi_overtime_noneduc <- function(x, y = 1, set = 4) {
+vi_ts_demo <- function(x, y = 1, set = 4, method = "rf",
+                       names = "Demographics", yrs = seq(2008, 2018, by = 2)) {
   x %>%
     map(y) %>%
-    map("rf") %>%
+    map(method) %>%
     map(set) %>%
     map(
       ~ bind_cols(
-        .x %>% 
+        .x %>%
           filter(
             rownames %in% c("gender.2", "v208_female", "V208.2", "v2004.2")
           ) %>%
           select(Gender = Overall),
-        .x %>% 
+        .x %>%
           filter(rownames %in% c("birthyr", "V207", "v207")) %>%
           select(Age = Overall),
         .x %>%
@@ -146,27 +151,18 @@ vi_overtime_noneduc <- function(x, y = 1, set = 4) {
           select(Hispanic = Overall)
       )
     ) %>%
-    bind_rows(.id = "Year") %>%
-    mutate(Year = as.integer(gsub("year", "", Year))) %>%
-    pivot_longer(
-      -Year, names_to = "Demographics", values_to = "Variable Importance"
-    ) %>%
-    ggplot(
-      aes(
-        x = Year, y = `Variable Importance`,
-        group = Demographics, colour = Demographics, fill = Demographics,
-        linetype = Demographics
-      )
-    ) + 
-    geom_line() +
-    scale_color_discrete() +
-    scale_linetype_discrete()
+    vi_fin(names = names, yrs = yrs)
 }
 
-vi_overtime_educ <- function(x, y = 1, set = 4) {
+vi_ts_edu <- function(x, y = 1, set = 4, method = "rf",
+                      names = "Demographics", yrs = seq(2008, 2018, by = 2),
+                      lvl = c(
+                        "HS Graduate", "Some College",
+                        "2-year", "4-year", "Post-grad"
+                      )) {
   x %>%
     map(y) %>%
-    map("rf") %>%
+    map(method) %>%
     map(set) %>%
     map(
       ~ bind_cols(
@@ -189,27 +185,19 @@ vi_overtime_educ <- function(x, y = 1, set = 4) {
           select(`Post-grad` = Overall)
       )
     ) %>%
-    bind_rows(.id = "Year") %>%
-    mutate(Year = as.integer(gsub("year", "", Year))) %>%
-    pivot_longer(
-      -Year, names_to = "Demographics", values_to = "Variable Importance"
-    ) %>%
-    ggplot(
-      aes(
-        x = Year, y = `Variable Importance`,
-        group = Demographics, colour = Demographics, fill = Demographics,
-        linetype = Demographics
-      )
-    ) + 
-    geom_line() +
-    scale_color_discrete() +
-    scale_linetype_discrete()
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
-vi_overtime_pid <-  function(x, y = 1, set = 4) {
+vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "Party ID",
+                      yrs = seq(2008, 2018, by = 2),
+                      lvl = rev(c(
+                        "Weak Democrat", "Lean Democrat", "Independent",
+                        "Lean Republican", "Weak Republican",
+                        "Strong Republican"
+                      ))) {
   x %>%
     map(y) %>%
-    map("rf") %>%
+    map(method) %>%
     map(set) %>%
     map(
       ~ bind_cols(
@@ -219,7 +207,7 @@ vi_overtime_pid <-  function(x, y = 1, set = 4) {
               "pid7.2", "v212d_not_very_strong_democrat", "CC307a.2"
             )
           ) %>%
-          select(`Not very strong Democrat` = Overall),
+          select(`Weak Democrat` = Overall), ## Not very strong Democrat
         .x %>%
           filter(
             rownames %in% c("pid7.3", "v212d_lean_democrat", "CC307a.3")
@@ -241,7 +229,7 @@ vi_overtime_pid <-  function(x, y = 1, set = 4) {
               "pid7.6", "v212d_not_very_strong_democrat", "CC307a.6"
             )
           ) %>%
-          select(`Not very strong Republican` = Overall),
+          select(`Weak Republican` = Overall), ## Not very strong Republican
         .x %>%
           filter(
             rownames %in% c("pid7.7", "v212d_strong_democrat", "CC307a.7")
@@ -249,57 +237,43 @@ vi_overtime_pid <-  function(x, y = 1, set = 4) {
           select(`Strong Republican` = Overall)
       )
     ) %>%
-    bind_rows(.id = "Year") %>%
-    mutate(Year = as.integer(gsub("year", "", Year))) %>%
-    pivot_longer(
-      -Year, names_to = "Demographics", values_to = "Variable Importance"
-    ) %>%
-    ggplot(
-      aes(
-        x = Year, y = `Variable Importance`,
-        group = Demographics, colour = Demographics, fill = Demographics,
-        linetype = Demographics
-      )
-    ) + 
-    geom_line() +
-    scale_x_continuous(breaks = seq(2008, 2018, by = 2)) + 
-    scale_color_discrete() +
-    scale_linetype_discrete()
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
 # Importance of race over the years ============================================
 ## Restricted to set 2, not 4!
-p1 <- vi_overtime_noneduc(vid, set = 2)
-p2 <- vi_overtime_educ(   vid, set = 2)
-p3 <- vi_overtime_noneduc(vid, set = 3)
-p4 <- vi_overtime_educ(   vid, set = 3)
-p5 <- vi_overtime_noneduc(vid, set = 4)
-p6 <- vi_overtime_educ(   vid, set = 4)
-p7 <- vi_overtime_pid(   vid, set = 2) + 
-  labs(caption = "Base category: Strong Democrat")
-p8 <- vi_overtime_pid(   vid, set = 3) + 
-  labs(caption = "Base category: Strong Democrat")
-p9 <- vi_overtime_pid(   vid, set = 4) + 
-  labs(caption = "Base category: Strong Democrat")
+cap <- "Base category: Strong Democrat"
+p_list <- list(
+  p1 = vi_ts_demo(vid, set = 2) + scale_y_continuous(limits = c(0, 10)),
+  p2 = vi_ts_edu(vid, set = 2) + scale_y_continuous(limits = c(0, 10)),
+  p3 = vi_ts_demo(vid, set = 3),
+  p4 = vi_ts_edu(vid, set = 3),
+  p5 = vi_ts_demo(vid, set = 4),
+  p6 = vi_ts_edu(vid, set = 4),
+  p7 = vi_ts_pid(vid, set = 2) + 
+    labs(caption = cap) + 
+    scale_y_continuous(limits = c(0, 100)),
+  p8 = vi_ts_pid(vid, set = 3) + 
+    labs(caption = cap) + 
+    scale_y_continuous(limits = c(0, 100)),
+  p9 = vi_ts_pid(vid, set = 4) + 
+    labs(caption = cap) + 
+    scale_y_continuous(limits = c(0, 100))
+)
 
-## But does this suggest more alignment?  
-pdf("fig/CCES/rf/cces_varimp_overtime_set2.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p1)
-dev.off()
-pdf("fig/CCES/rf/cces_varimp_overtime_set3.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p2)
-dev.off()
-pdf("fig/CCES/rf/cces_varimp_overtime_set4.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p3)
+# Export =======================================================================
+pdf("fig/CCES/rf/cces_varimp_ts_set2_demo.pdf", width = 6, height = 4)
+vi_bottom(Kmisc::pdf_default(p_list$p1), nrow = 1)
+pdf("fig/CCES/rf/cces_varimp_ts_set2_edu.pdf", width = 6, height = 4)
+vi_bottom(Kmisc::pdf_default(p_list$p2), nrow = 1)
 dev.off()
 
-
-pdf("fig/CCES/rf/cces_varimp_overtime_set2_pid.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p7)
+pdf("fig/CCES/rf/cces_varimp_ts_set2_pid.pdf", width = 6, height = 4)
+vi_bottom(Kmisc::pdf_default(p_list$p7))
 dev.off()
-pdf("fig/CCES/rf/cces_varimp_overtime_set3_pid.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p8)
+pdf("fig/CCES/rf/cces_varimp_ts_set3_pid.pdf", width = 6, height = 4)
+vi_bottom(Kmisc::pdf_default(p_list$p8))
 dev.off()
-pdf("fig/CCES/rf/cces_varimp_overtime_set4_pid.pdf", width = 6, height = 4)
-Kmisc::pdf_default(p9)
+pdf("fig/CCES/rf/cces_varimp_ts_set4_pid.pdf", width = 6, height = 4)
+vi_bottom(Kmisc::pdf_default(p_list$p9))
 dev.off()
