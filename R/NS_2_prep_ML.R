@@ -10,22 +10,32 @@ rep_seeds <- function(folds = 10, n = 1e4, seed = 123) {
   seeds[[folds + 1]] <- sample.int(n = n, 1)
   return(seeds)
 }
-  
+
 # Prepare training validation sets
 set.seed(seed)
 
 if (outcome == "trump16") {
-
-Xm_trainset_indices <- createDataPartition(Xm$trump16,times = 1,
-                                           p=0.8, list=F)  # Note: THESE ARE INDICES ONLY
-Xm_testset_data <- Xm[-Xm_trainset_indices,]
+  Xm_trainset_indices <- createDataPartition(Xm$trump16,
+    times = 1,
+    p = 0.8, list = F
+  ) # Note: THESE ARE INDICES ONLY
+  Xm_testset_data <- Xm[-Xm_trainset_indices, ]
 }
 
 if (outcome == "biden20") {
-  
-  biden_trainsetIndex <- createDataPartition(Xm$biden20, p = .8, 
-                                            list = F, 
-                                            times = 1)
+  biden_trainsetIndex <- createDataPartition(Xm$biden20,
+    p = .8,
+    list = F,
+    times = 1
+  )
+}
+
+if (outcome == "trump2Pvote_intent") {
+  D_trainsetIndex_20percent <- createDataPartition(Xm$trump2Pvote_intent,
+    p = .2,
+    list = F,
+    times = 1
+  )
 }
 
 # Use rep_seeds() as suggested by Silvia on 7/25/20:
