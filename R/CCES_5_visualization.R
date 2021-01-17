@@ -99,7 +99,7 @@ tab <- vi_inter_btw(
   y = 1, from = 1, to = 2, top = 10
 ) %>%
   xtable(
-    label = "tab:cces_vi_btw_sets_demo_1",
+    label = "tab:CCES_vi_btw_sets_demo_1",
     caption = "Demographics Remaining Within Top 10 Variables, PID Included"
   )
 print(
@@ -112,7 +112,7 @@ tab <- vi_inter_btw(
   y = 1, from = 1, to = 3, top = 10
 ) %>%
   xtable(
-    label = "tab:cces_vi_btw_sets_demo_2",
+    label = "tab:CCES_vi_btw_sets_demo_2",
     caption =
       "Demographics Remaining Within Top 10 Variables, PID/Issues Included"
   )
@@ -262,18 +262,18 @@ p_list <- list(
 )
 
 # Export =======================================================================
-pdf("fig/CCES/rf/cces_varimp_ts_set2_demo.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_demo.pdf", width = 6, height = 4)
 vi_bottom(Kmisc::pdf_default(p_list$p1), nrow = 1)
-pdf("fig/CCES/rf/cces_varimp_ts_set2_edu.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_edu.pdf", width = 6, height = 4)
 vi_bottom(Kmisc::pdf_default(p_list$p2), nrow = 1)
 dev.off()
 
-pdf("fig/CCES/rf/cces_varimp_ts_set2_pid.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_pid.pdf", width = 6, height = 4)
 vi_bottom(Kmisc::pdf_default(p_list$p7))
 dev.off()
-pdf("fig/CCES/rf/cces_varimp_ts_set3_pid.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_varimp_ts_set3_pid.pdf", width = 6, height = 4)
 vi_bottom(Kmisc::pdf_default(p_list$p8))
 dev.off()
-pdf("fig/CCES/rf/cces_varimp_ts_set4_pid.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_varimp_ts_set4_pid.pdf", width = 6, height = 4)
 vi_bottom(Kmisc::pdf_default(p_list$p9))
 dev.off()

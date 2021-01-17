@@ -2,13 +2,8 @@ source("R/CCES_0_utilities.R")
 
 ## Extract performance measures ================================================
 ## loop to enable gc()
-if (file.exists("output/CCES/CCES_perf.RData")) {
-  load("output/CCES/CCES_perf.RData")
-  load("output/CCES/CCES_varimp.RData")
-} else {
-  perf <- list()
-  vid <- list()
-}
+perf <- list()
+vid <- list()
 
 for (yr in rev(seq(2006, 2018, 2))) {
   for (i in seq(length(file_suffix[[paste0("year", yr)]]))) {
@@ -18,7 +13,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
     )
 
     ## caret results
-    for (method in c("cart", "lasso", "logit", "rf")) {
+    for (method in c("logit", "cart", "rf")) {
       for (varset in seq(4)) {
         
         ## Load previously run results
@@ -71,7 +66,12 @@ for (yr in rev(seq(2006, 2018, 2))) {
 
 ## Pres Vote Choice, Random Forest =============================================
 tab <- seq(4) %>%
-  map(~ perf_summ(1, "rf", .x)) %>%
+  map(
+    ~ perf_summ(
+      within(perf, rm("year2006")), 
+      1, "rf", .x, yr = rev(seq(2008, 2018, 2))
+    )
+  ) %>%
   bind_rows(.id = "Set") %>%
   arrange(desc(Year), Set) %>%
   mutate(
@@ -156,4 +156,3 @@ print(
   tab, include.rownames = FALSE,
   file = "tab/CCES_senate_rf.tex"
 )
-
