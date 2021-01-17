@@ -1,11 +1,12 @@
 source("R/CCES_0_utilities.R")
 
 ## loop to enable gc()
-## cforest not included, 2006 excluded for now
-for (yr in rev(seq(2008, 2018, 2))) {
-  for (i in seq(length(file_suffix[[paste0("year", yr)]]))[1]) {
-  # for (i in seq(length(file_suffix[[paste0("year", yr)]]))) {
+## cforest not included
+
+for (yr in rev(seq(2006, 2018, 2))) {
+  for (i in seq(length(file_suffix[[paste0("year", yr)]]))) {
     sfx <- file_suffix[[paste0("year", yr)]][i]
+    
     ## Default 2018
     vl <- list(
       ## Prevent multrace being mixed in
@@ -57,30 +58,14 @@ for (yr in rev(seq(2008, 2018, 2))) {
       message(paste0("Variable set is ", varset))
       message(paste0("# of columns in train set: ", dim(temp$train)[2]))
       
-      # ### Linear
-      # method <- "lm"
-      # turn.lm <- train_1line(temp, method = method)
-      # save(turn.lm, file = file_path_fxn())
-      # rm(turn.lm)
-      # gc(reset = TRUE)
-      # message("Linear finished.")
-      # 
-      # ### Logit
-      # method <- "logit"
-      # turn.logit <- train_1line(temp, method = method)
-      # save(turn.logit, file = file_path_fxn())
-      # rm(turn.logit)
-      # gc(reset = TRUE)
-      # message("Logit finished.")
-      # 
-      # ### Lasso
-      # method <- "lasso"
-      # turn.lasso <- train_1line(temp, method = method)
-      # save(turn.lasso, file = file_path_fxn())
-      # rm(turn.lasso)
-      # gc(reset = TRUE)
-      # message("Lasso finished.")
-      
+      ### Logit
+      method <- "logit"
+      turn.logit <- train_1line(temp, method = method)
+      save(turn.logit, file = file_path_fxn())
+      rm(turn.logit)
+      gc(reset = TRUE)
+      message("Logit finished.")
+
       ### CART
       method <- "cart"
       turn.cart <- train_1line(temp, method = "rpart")

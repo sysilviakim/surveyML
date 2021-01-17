@@ -41,6 +41,7 @@ df_ls <- seq(nrow(file_ls)) %>%
         read.table(
           file.path("data/cces", file_ls$file_name[.x]), header = TRUE, 
           fill = TRUE, quote = "", sep = "\t", stringsAsFactors = FALSE
+          ## In hindsight, would have better specified colClasses
         )
       } else if (file_ls$file_format[.x] == ".rdata") {
         loadRData(file.path("data/cces", file_ls$file_name[.x]))
@@ -54,4 +55,3 @@ df_ls <- seq(nrow(file_ls)) %>%
       }
     }
   )
-
