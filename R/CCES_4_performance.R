@@ -75,13 +75,7 @@ tab <- seq(4) %>%
   bind_rows(.id = "Set") %>%
   arrange(desc(Year), Set) %>%
   mutate(
-    Set = factor(
-      Set,
-      levels = seq(4), labels = c(
-        "Demographics", "Demo. + PID", "Demo. + PID + Issues",
-        "All Observables"
-      )
-    )
+    Set = factor(Set, levels = seq(4), labels = set_labels)
   ) %>%
   rename(`Variable Specification` = Set) %>%
   filter(Year != 2006) %>%

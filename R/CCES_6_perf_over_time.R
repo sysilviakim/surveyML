@@ -44,17 +44,8 @@ summ_df <- summ_df %>%
       stringsAsFactors = FALSE
     )
   ) %>%
-  mutate(
-    Set = factor(
-      Set,
-      levels = seq(4),
-      labels = c(
-        "Demographics Only", "Demo. + PID",
-        "Demo. + PID + Issues", "All Covariates"
-      )
-    )
-  ) %>%
-  arrange(Year, Set)
+  mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+  arrange(desc(Year), Set)
 
 save(summ_df, file = "data/cces-tidy/perf_summ_CCES_Nationscape.Rda")
 
