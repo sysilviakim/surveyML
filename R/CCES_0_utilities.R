@@ -49,13 +49,14 @@ rep_seeds <- function(folds = 10, n = 1e4, seed = 123) {
 }
 
 one_hot <- function(df) {
-  x <- predict(caret::dummyVars(~., df, fullRank = T), df)
+  x <- predict(caret::dummyVars(~., df, fullRank = TRUE), df)
   output <- as_tibble(x)
   return(output)
 }
 
 data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
   ## Turn NA into a certain value that is not used as a response in survey
+  ## CCES and ANES is okay with 999; not Nationscape
   df[df == "\"\""] <- ""
   if (!is.null(na)) {
     df[is.na(df)] <- na
@@ -64,13 +65,16 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
   ## Keep only non-NA values for depvar
   df <- df %>% filter(!is.na(!!as.name(dep)))
 
-  ## Zero-variance columns or columns with many responses, except birth year
+  ## Zero-variance columns or columns with many responses, except dbl 
+  ## e.g. birth year
   temp <- df %>%
     map(~ (length(unique(.x)) < 2 | length(unique(.x)) > 20)) %>%
     unlist() %>%
     which()
   if (length(setdiff(temp, match(dbl, names(df), nomatch = 0))) > 0) {
-    df <- df[, -setdiff(temp, match(dbl, names(df), nomatch = 0))]
+    df <- df[, -setdiff(temp, match(dbl, names(df), nomatch = 0))] %>%
+      ## If missing continuous values, delete row
+      filter_at(dbl, all_vars(!is.na(.)))
   }
 
   ## Near-zero variance variables
@@ -145,7 +149,10 @@ train_name_clean <- function(temp) {
   return(temp)
 }
 
-train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL) {
+train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL, 
+                        seed = 100) {
+  set.seed(seed)
+  
   if (is.null(tc)) {
     tc <- trainControl(
       method = "cv",
@@ -223,7 +230,7 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL) {
   return(out)
 }
 
-pdf_varimp <- function(x, filename, labels, font = NULL, size = 12) {
+pdf_varimp <- function(x, filename, labels = NULL, font = NULL, size = 12) {
   if (is.null(font)) font <- "Kievit Offc Pro"
   temp <- varImp(x)
   set.seed(100)
@@ -231,8 +238,10 @@ pdf_varimp <- function(x, filename, labels, font = NULL, size = 12) {
   p <- ggplot(
     temp,
     top = min(10, nrow(temp$importance %>% filter(Overall > 0)))
-  ) +
-    scale_x_discrete("Feature", labels = labels)
+  )
+  if (!is.null(labels)) {
+    p <- p + scale_x_discrete("Feature", labels = labels)
+  }
   pdf(filename, width = 8, height = 4)
   print(p_font(Kmisc::pdf_default(p), font = font, size = size))
   dev.off()
@@ -245,23 +254,19 @@ cartplot_pdf <- function(x, filename) {
 }
 
 perf_routine <- function(method, x, test, dv, verbose = TRUE) {
-  if (method == "rf") x <- x$finalModel
+  ## https://stackoverflow.com/questions/30097730/
+  ## Per Kuhn's advice, fixing code
+  ## if (method == "rf") x <- x$finalModel
   output <- list()
   output[["method"]] <- method
 
-  if (method == "rf") {
-    output[["pred.probs"]] <- pred.probs <- predict(x, test)
-    p1 <- pred.probs$predictions[, dv[1]]
-    p2 <- pred.probs$predictions[, dv[2]]
-  } else {
-    output[["pred.probs"]] <- pred.probs <- predict(x, test, type = "prob")
-    p1 <- pred.probs[, dv[1]]
-    p2 <- pred.probs[, dv[2]]
-  }
+  ## So that we do not invoke stats::predict
+  output[["pred.probs"]] <- pred.probs <- predict.train(x, test, type = "prob")
+  p1 <- pred.probs[, dv[1]]
+  p2 <- pred.probs[, dv[2]]
 
   output[["pred.factor"]] <- pred.factor <- factor(
-    ifelse(p2 < 0.5, dv[1], dv[2]),
-    levels = dv
+    ifelse(p2 < 0.5, dv[1], dv[2]), levels = dv
   )
 
   ## Confusion matrix contains accuracy (+CI)
@@ -321,6 +326,61 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
   )
 }
 
+vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2016, by = 4),
+                   lvl = c("Black", "Hispanic", "Gender", "Age")) {
+  x %>%
+    bind_rows(.id = "Year") %>%
+    mutate(Year = as.integer(gsub("year", "", Year))) %>%
+    pivot_longer(
+      -Year,
+      names_to = names, values_to = "Variable Importance"
+    ) %>%
+    mutate(
+      !!as.name(names) := factor(!!as.name(names), levels = lvl)
+    ) %>%
+    ggplot(
+      aes(
+        x = Year, y = `Variable Importance`, group = !!as.name(names), 
+        colour = !!as.name(names), fill = !!as.name(names), 
+        linetype = !!as.name(names)
+      )
+    ) +
+    scale_x_continuous(breaks = yrs) +
+    geom_line() +
+    scale_color_discrete() +
+    scale_linetype_discrete()
+}
+
+vi_bottom <- function(p, nrow = 2, key = 1) {
+  p +
+    theme(legend.position = "bottom", legend.key.width = unit(key, "cm")) +
+    guides(
+      colour = guide_legend(nrow = nrow, byrow = TRUE),
+      linetype = guide_legend(nrow = nrow, byrow = TRUE)
+    )
+}
+
+po_plot <- function(x, metric, years = seq(2008, 2020, by = 2)) {
+  p <- ggplot(
+    x, aes(
+      x = Year, y = !!as.name(metric), group = Set, colour = Set, linetype = Set
+    )
+  ) +
+    geom_line(size = 1) +
+    scale_x_continuous(breaks = years) +
+    scale_color_viridis_d(direction = -1, name = "Variable Specification") +
+    scale_linetype_manual(
+      name = "Variable Specification",
+      values = c("solid", "twodash", "dotted", "dashed")
+    ) +
+    guides(
+      colour = guide_legend(nrow = 2, byrow = TRUE),
+      linetype = guide_legend(nrow = 2, byrow = TRUE)
+    ) + 
+    scale_y_continuous(limits = c(0.38, 1.0))
+  return(p)
+}
+
 ## Extra Setup =================================================================
 options(
   mc.cores = parallel::detectCores(),
@@ -353,7 +413,7 @@ file_suffix <- list(
 ) %>%
   map(~ c(.x, c("house", "senate")))
 
-### Label for 2018 -------------------------------------------------------------
+## Label for CCES 2018 ---------------------------------------------------------
 vl <- list(
   common = c(
     "pid3.2" = "3-pt Party ID: I think of myself as Republican",
@@ -542,7 +602,7 @@ vl[["var18"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2016 -------------------------------------------------------------
+## Label for CCES 2016 ---------------------------------------------------------
 vl[["var16"]] <- c(
   "CC16_302.2" = "Last year national economy has: gotten better",
   "CC16_302.3" = "Last year national economy has: stayed about the same",
@@ -765,7 +825,7 @@ vl[["var16"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2014 -------------------------------------------------------------
+## Label for CCES 2014 ---------------------------------------------------------
 vl[["var14"]] <- c(
   "CC14_302.2" = "Believes national economy has gotten better",
   "CC14_302.3" = "Believes national economy has stayed about the same",
@@ -836,7 +896,7 @@ vl[["var14"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2012 -------------------------------------------------------------
+## Label for CCES 2012 ---------------------------------------------------------
 vl[["var12"]] <- c(
   "CC302.2" = "Believes national economy has gotten better",
   "CC302.3" = "Believes national economy has stayed about the same",
@@ -874,7 +934,7 @@ vl[["var12"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2010 -------------------------------------------------------------
+## Label for CCES 2010 ---------------------------------------------------------
 vl[["var10"]] <- c(
   "cc308a_somewhat_disapprove" = "Somewhat disapprove of Obama's job",
   "cc308a_strongly_disapprove" = "Strongly disapprove of Obama's job",
@@ -903,7 +963,7 @@ vl[["var10"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2008 -------------------------------------------------------------
+## Label for CCES 2008 ---------------------------------------------------------
 vl[["var08"]] <- c(
   "CC302.5" = "Believes national economy has gotten much worse",
   "CC304.4" = "Believes US was right in Iraq war/despite mistakes, worth it",
@@ -950,7 +1010,7 @@ vl[["var08"]] <- c(
 ) %>%
   c(vl$common, .)
 
-### Label for 2006 -------------------------------------------------------------
+## Label for CCES 2006 ---------------------------------------------------------
 vl[["var06"]] <- c(
   "v2089.4" = "Will definitely vote for Republican candidate in Congressional election",
   "v3003.4" = "Strongly disapprove of Bush's job",
@@ -981,3 +1041,257 @@ vl[["var06"]] <- c(
   "v5023.4" = "Senator 2 actual roll call vote on partial birth abortion measure (options?)"
 ) %>%
   c(vl$common, .)
+
+## Label for ANES (cumulative) -------------------------------------------------
+vl[["anes"]] <- c(
+  "vcf0014_1" = "(Pre-election interview data present)",
+  "vcf0015a_2" = "Abbreviated Interview: Spanish Pre",
+  "vcf0015a_999" = "(Abbreviated Interview: answer missing)",
+  "vcf0101" = "Age",
+  "vcf0104_2" = "Female",
+  "vcf0104_3" = "Gender: Other",
+  "vcf0104_999" = "(Gender answer missing)",
+  "vcf0105b_2" = "Black",
+  "vcf0105b_3" = "Hispanic",
+  "vcf0105b_4" = "Asian or Other Race",
+  "vcf0105b_999" = "(Race answer missing)",
+  "vcf0110_2" = "Education: High School Graduate",
+  "vcf0110_3" = "Education: Some College",
+  "vcf0110_4" = "Education: College or Higher",
+  "vcf0110_999" = "(Education answer missing)",
+  "vcf0114_2" = "Income: 17-33 percentile",
+  "vcf0114_3" = "Income: 34-67 percentile",
+  "vcf0114_4" = "Income: 68-95 percentile",
+  "vcf0114_5" = "Income: 96-100 percentile",
+  "vcf0114_999" = "(Income answer missing)",
+  "vcf0127_2" = "No household member in labor union",
+  "vcf0127_999" = "(Household member in labor union: answer missing)",
+  "vcf0301_2" = "Weak Democrat",
+  "vcf0301_3" = "Independent Democrat",
+  "vcf0301_4" = "Independent",
+  "vcf0301_5" = "Independent Republican",
+  "vcf0301_6" = "Weak Republican",
+  "vcf0301_7" = "Strong Republican",
+  "vcf0301_999" = "(7-pt Party ID: answer missing)",
+  "vcf0343_4" = "President moral: not well at all",
+  "vcf0344_3" = "President provides strong leadership: not too well",
+  "vcf0348_2" = "President does not make me hopefull",
+  "vcf0355_4" = "Dem prez cand moral: not well at all",
+  "vcf0360_2" = "Dem Prez Cand: don't feel hopeful",
+  "vcf0361_2" = "Dem Prez Cand: don't feel proud",
+  "vcf0372_2" = "Rep Prez Cand: don't feel hopeful",
+  "vcf0373_2" = "Rep Prez Cand: don't feel proud",
+  "vcf0374_5" = "Like anything about Dem party: no",
+  "vcf0375d_999" = "(Like anything about Dem party: answer missing)",
+  "vcf0388d_999" = "(Like anything about Rep party: answer missing)",
+  "vcf0389d_999" = "(Like anything about Dem party: answer missing)",
+  "vcf0475_5" = "Something particular contributes to Dem prez cand vote choice: no",
+  "vcf0476b_999" = "(Like anything about Dem prez cand: answer missing)",
+  "vcf0476d_999" = "(Like anything about Dem prez cand: answer missing)",
+  "vcf0477b_999" = "(Like anything about Dem prez cand: answer missing)",
+  "vcf0477d_999" = "(Like anything about Dem prez cand: answer missing)",
+  "vcf0482d_999" = "(Particular dislike about Dem prez cand: answer missing)",
+  "vcf0487_5" = "Like anything about Rep prez cand: no",
+  "vcf0488b_999" = "(Like anything about Rep prez cand: answer missing)",
+  "vcf0488d_999" = "(Like anything about Rep prez cand: answer missing)",
+  "vcf0489b_999" = "(Like anything about Rep prez cand: answer missing)",
+  "vcf0489d_999" = "(Like anything about Rep prez cand: answer missing)",
+  "vcf0490d_999" = "(Like anything about Rep prez cand: answer missing)",
+  "vcf0494b_999" = "(Particular dislike about Rep prez cand: answer missing)",
+  "vcf0495b_999" = "(Particular dislike about Rep prez cand: answer missing)",
+  "vcf0522_3" = "Party best to avoid (bigger) war: Republicans",
+  "vcf0605_2" = "Government is run for: benefit of all",
+  "vcf0605_9" = "Government is run for: don't know",
+  "vcf0606_2" = "Fed. government waste tax money: some",
+  "vcf0606_3" = "Fed. government waste tax money: not very much",
+  "vcf0606_9" = "Fed. government waste tax money: don't know",
+  "vcf0632_2" = "Branch of govt trusts most: Supreme Court",
+  "vcf0632_3" = "Branch of govt trusts most: president",
+  "vcf0632_4" = "Branch of govt trusts most: political parties",
+  "vcf0632_5" = "Branch of govt trusts most: don't know",
+  "vcf0700_2" = "Predict that Rep cand will be elected president",
+  "vcf0700_7" = "Predict that third-party cand will be elected president",
+  "vcf0707_2" = "Vote for House: Republican",
+  "vcf0708_2" = "Vote for Senate: Republican",
+  "vcf0712_2" = "I decided to vote this way: when candidate announced",
+  "vcf0712_3" = "I decided to vote this way: during conventions",
+  "vcf0712_4" = "I decided to vote this way: post-convention period",
+  "vcf0712_5" = "I decided to vote this way: last two weeks of campaign",
+  "vcf0712_6" = "I decided to vote this way: on Election Day",
+  "vcf0712_0" = "(I decided to vote this way: did not vote)",
+  "vcf0712_999" = "(I decided to vote this way: answer missing)",
+  "vcf0715_2" = "State/local vote: split ticket, mostly Democratic",
+  "vcf0715_3" = "State/local vote: split ticket, half and half",
+  "vcf0715_4" = "State/local vote: split ticket, mostly Republican",
+  "vcf0715_5" = "State/local vote: straight ticket Republican",
+  "vcf0716_2" = "I voted straight ticket",
+  "vcf0716_9" = "(Straight ticket voting: did not vote)",
+  "vcf0716_999" = "(Straight ticket voting: answer missing)",
+  "vcf0736_5" = "Vote for House: Republican",
+  "vcf0737_2" = "Registered to vote: yes",
+  "vcf0737_999" = "(Registered to vote: answer missing)",
+  "vcf0805_2" = "Government assistance with medical care: stay out of this",
+  "vcf0805_9" = "Government assistance with medical care: not sure",
+  "vcf0805_999" = "(Government assistance with medical care: answer missing)",
+  "vcf0814_2" = "Civil Rights push: about right",
+  "vcf0814_3" = "Civil Rights push: too fast",
+  "vcf0814_9" = "Civil Rights push too fast: don't know",
+  "vcf0814_999" = "(Civil Rights push too fast: answer missing)",
+  "vcf0815_2" = "In favor of sth in-between desegregation and strict segregation",
+  "vcf0815_3" = "In favor of strict segregation",
+  "vcf0816_2" = "Should govt ensure school integration: stay out of this",
+  "vcf0816_9" = "Should govt ensure school integration: don't know",
+  "vcf0816_999" = "(Should govt ensure school integration: answer missing)",
+  "vcf0818_2" = "Should govt ensure fair jobs/housing for Blacks: agree but not very strongly",
+  "vcf0818_3" = "Should govt ensure fair jobs/housing for Blacks: not sure",
+  "vcf0818_4" = "Should govt ensure fair jobs/housing for Blacks: disagree but not very strongly",
+  "vcf0818_5" = "Should govt ensure fair jobs/housing for Blacks: disagree strongly",
+  "vcf0818_999" = "(Should govt ensure fair jobs/housing for Blacks: answer missing)",
+  "vcf0822_2" = "Government economic policy: doing only a fair job",
+  "vcf0822_3" = "Government economic policy: doing a good job",
+  "vcf0822_9" = "Government economic policy doing a good job: don't know",
+  "vcf0822_999" = "(Government economic policy doing a good job: answer missing)",
+  "vcf0826_2" = "Did US do right thing getting involved in war: yes",
+  "vcf0826_9" = "Did US do right thing getting involved in war: depends",
+  "vcf0826_999" = "(Did US do right thing getting involved in war: answer missing)",
+  "vcf0827_2" = "How should US proceed in current war: try for peace",
+  "vcf0827_3" = "How should US proceed in current war: take stronger stand",
+  "vcf0827_9" = "How should US proceed in current war: don't know",
+  "vcf0827_999" = "(How should US proceed in current war: answer missing)",
+  "vcf0828_2" = "Military spending: should continue at least at present level",
+  "vcf0828_9" = "Military spending cut: don't know",
+  "vcf0828_999" = "(Military spending cut: answer missing)",
+  "vcf0829_2" = "Govt in Washington: getting too powerful",
+  "vcf0829_9" = "Govt in Washington getting too powerful: don't know",
+  "vcf0829_999" = "(Govt in Washington getting too powerful: answer missing)",
+  "vcf0833_5" = "Equal Right Amendment: disapprove",
+  "vcf0833_8" = "Equal Right Amendment approval: don't know",
+  "vcf0833_999" = "(Equal Right Amendment approval: answer missing)",
+  "vcf0838_4" = "By law, abortion should be allowed as choice",
+  "vcf0852_2" = "Should adjust view of moral behavior: agree somewhat",
+  "vcf0852_3" = "Should adjust view of moral behavior: neither agree/disagree",
+  "vcf0852_4" = "Should adjust view of moral behavior: disagree somewhat",
+  "vcf0852_5" = "Should adjust view of moral behavior: disagree strongly",
+  "vcf0852_8" = "Should adjust view of moral behavior: don't know",
+  "vcf0852_999" = "(Should adjust view of moral behavior: answer missing)",
+  "vcf0867_5" = "Affirmative action in promotion: against",
+  "vcf0867_8" = "Affirmative action in promotion approve: don't know",
+  "vcf0867_9" = "(Affirmative action in promotion approve: answer missing)",
+  "vcf0867a_5" = "Affirmative action in promotion: oppose strongly",
+  "vcf0875_2" = "Most important national problem: economics",
+  "vcf0875_3" = "Most important national problem: foreign affairs",
+  "vcf0875_4" = "Most important national problem: government functioning",
+  "vcf0875_5" = "Most important national problem: labor issues",
+  "vcf0875_6" = "Most important national problem: natural resources",
+  "vcf0875_7" = "Most important national problem: public order",
+  "vcf0875_8" = "Most important national problem: racial problems",
+  "vcf0875_9" = "Most important national problem: social welfare",
+  "vcf0875_97" = "Most important national problem: other problems",
+  "vcf0875_999" = "(Most important national problem: answer missing)",
+  "vcf0876_5" = "Laws to protect homosexuals against discrimination: oppose",
+  "vcf0876_8" = "Laws to protect homosexuals against discrimination favor: don't know",
+  "vcf0876_999" = "(Laws to protect homosexuals against discrimination favor: answer missing)",
+  "vcf0877_5" = "Homosexuals should be allowed in military: don't think so",
+  "vcf0877_8" = "Homosexuals should be allowed in military: don't know",
+  "vcf0877_999" = "(Homosexuals should be allowed in military: answer missing)",
+  "vcf0877a_2" = "Gays in military: feel not strongly should be allowed",
+  "vcf0877a_4" = "Gays in military: feel not strongly should not be allowed",
+  "vcf0877a_5" = "Gays in military: feel strongly should not be allowed",
+  "vcf0877a_7" = "Gays in military allowed: don't know",
+  "vcf0877a_999" = "(Gays in military allowed: answer missing)",
+  "vcf0887_2" = "Federal spending on child care: same",
+  "vcf0887_3" = "Federal spending on child care: decreased",
+  "vcf0887_8" = "Federal spending on child care increased: don't know",
+  "vcf0887_999" = "(Federal spending on child care increased: answer missing)",
+  "vcf0893_2" = "Federal spending on the homeless: same",
+  "vcf0893_3" = "Federal spending on the homeless: decreased",
+  "vcf0893_8" = "Federal spending on the homeless increased: don't know",
+  "vcf0893_999" = "(Federal spending on the homeless increased: answer missing)",
+  "vcf0894_2" = "Federal spending on welfare programs: same",
+  "vcf0894_3" = "Federal spending on welfare programs: decreased",
+  "vcf0894_8" = "Federal spending on welfare programs increased: don't know",
+  "vcf0894_999" = "(Federal spending on welfare programs increased: answer missing)",
+  "vcf1004_2" = "Respondent is Republican, House incumbent is Republican",
+  "vcf1004_3" = "Respondent is Democrat, House incumbent is Republican",
+  "vcf1004_4" = "Respondent is Democrat, House incumbent is Democrat",
+  "vcf9009_5" = "President's performance on economy: strongly disapprove",
+  "vcf9010_5" = "Republicans would best handle inflation",
+  "vcf9012_5" = "Republicans would handle most important problem",
+  "vcf9014_2" = "Gone too far pushing equal rights: agree somewhat",
+  "vcf9014_3" = "Gone too far pushing equal rights: neither agree/disagree",
+  "vcf9014_4" = "Gone too far pushing equal rights: disagree somewhat",
+  "vcf9014_5" = "Gone too far pushing equal rights: disagree strongly",
+  "vcf9014_8" = "Gone too far pushing equal rights: don't know",
+  "vcf9014_999" = "(Gone too far pushing equal rights: answer missing)",
+  "vcf9025_2" = "Vote for governor: Republican",
+  "vcf9027_2" = "Voted Republican in Last Presidential Election",
+  "vcf9027_3" = "Last Presidential Vote: Not Applicable Or Refused",
+  "vcf9027_5" = "Voted Third-Party in Last Presidential Election",
+  "vcf9027_9" = "Last Presidential Vote: Not Applicable Or Refused",
+  "vcf9027_0" = "(Last Presidential Vote: did not vote)",
+  "vcf9027_999" = "(Last Presidential Vote: answer missing)",
+  "vcf9028_2" = "Believe Rep prez cand will win in respondent's state",
+  "vcf9037_5" = "Govt ensure fair jobs for Blacks: not govt's business",
+  "vcf9037_9" = "Govt should ensure fair jobs for Blacks: don't know",
+  "vcf9037_999" = "(Govt should ensure fair jobs for Blacks: answer missing)",
+  "vcf9042_2" = "Blacks gotten less than they deserve: agree somewhat",
+  "vcf9042_3" = "Blacks gotten less than they deserve: neither agree nor disagree",
+  "vcf9042_4" = "Blacks gotten less than they deserve: disagree somewhat",
+  "vcf9042_5" = "Blacks gotten less than they deserve: disagree strongly",
+  "vcf9042_8" = "Blacks gotten less than they deserve: don't know",
+  "vcf9042_999" = "(Blacks gotten less than they deserve: answer missing)",
+  "vcf9044_2" = "Federal govt policy has made economy: somewhat better",
+  "vcf9044_3" = "Federal govt policy has made economy: no difference",
+  "vcf9044_4" = "Federal govt policy has made economy: somewhat worse",
+  "vcf9044_5" = "Federal govt policy has made economy: much worse",
+  "vcf9044_6" = "Federal govt policy has made economy: better, don't know how much",
+  "vcf9044_7" = "Federal govt policy has made economy: worse, don't know how much",
+  "vcf9044_8" = "Federal govt policy has made economy better: don't know",
+  "vcf9044_999" = "(Federal govt policy has made economy better: answer missing)",
+  "vcf9044a_2" = "Federal govt policy has made economy: same",
+  "vcf9044a_3" = "Federal govt policy has made economy: worse",
+  "vcf9044a_8" = "Federal govt policy has made economy better: don't know",
+  "vcf9045_3" = "Position of US: same in the past year",
+  "vcf9045_5" = "Position of US: stronger in the past year",
+  "vcf9045_8" = "Position of US stronger in past year: don't know",
+  "vcf9045_999" = "(Position of US stronger in past year: answer missing)",
+  "vcf9046_2" = "Federal spending on food stamps: same",
+  "vcf9046_3" = "Federal spending on food stamps: decreased",
+  "vcf9046_7" = "Federal spending on food stamps: cut out entirely",
+  "vcf9046_8" = "Federal spending on food stamps increased: don't know",
+  "vcf9046_999" = "(Federal spending on food stamps increased: answer missing)",
+  "vcf9051_5" = "School prayer: religion does not belong in school",
+  "vcf9051_8" = "School prayer should be allowed: don't know",
+  "vcf9051_999" = "(School prayer should be allowed: answer missing)",
+  "vcf9131_2" = "There are more things govt should be doing",
+  "vcf9132_2" = "Free market can handle economy without govt",
+  "vcf9132_8" = "Free market can handle economy without govt: don't know",
+  "vcf9133_2" = "Govt became bigger because: problems we face are bigger",
+  "vcf9133_3" = "Govt became bigger because: don't know",
+  "vcf9133_999" = "(Govt became bigger because: answer missing)",
+  "vcf9132_999" = "(Free market can handle economy without govt: answer missing)",
+  "vcf9204_2" = "Republican party represents respondent's view best",
+  "vcf9205_3" = "Republicans would do a better job handling nation's economy",
+  "vcf9207_3" = "Somewhat dislike Dem prez cand", ##  (4/11-pt scale)
+  "vcf9207_10" = "Strongly like Dem prez cand", ##  (11/11-pt scale)
+  "vcf9210_5" = "Dem prez cand does not care about people like me at all",
+  "vcf9212_5" = "Honest does not describe Dem prez cand at all",
+  "vcf9213_5" = "Strong leadership does not describe Rep prez cand at all",
+  "vcf9214_5" = "Rep prez cand does not care about people like me at all",
+  "vcf9216_5" = "Honest does not describe Rep prez cand at all",
+  "vcf9217_2" = "Way current prez is handling foreign relations: disapprove",
+  "vcf9218_2" = "Way current prez is handling health care: disapprove",
+  "vcf9222_2" = "The country on right vs. wrong track: wrong track",
+  "vcf9236_2" = "Death penalty for murderers: oppose",
+  "vcf9237_2" = "Death penalty for murderers: favor not strong",
+  "vcf9237_4" = "Death penalty for murderers: oppose not strong",
+  "vcf9237_5" = "Death penalty for murderers: oppose strongly",
+  "vcf9238_2" = "Should govt make gun sales more difficult: keep same rules",
+  "vcf9238_3" = "Should govt make gun sales more difficult: make it easier",
+  "vcf9238_999" = "(Should govt make gun sales more difficult: answer missing)",
+  "vcf9275_2" = "Blacks have influence on American politics: just about right",
+  "vcf9275_3" = "Blacks have influence on American politics: too little",
+  "vcf9275_999" = "(Blacks have influence on American politics: answer missing)"
+)
+
+
