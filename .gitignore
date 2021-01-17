@@ -2,4 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
+lit/*
+slides/*
 R/old/*
+fig/CCES/rf/*_senate_*
+fig/CCES/rf/*_house_*
+fig/CCES/rf/*approval*
+*varcart*
+*varlogit*
+fig/Nationscape/*
+tab/Nationscape/*
