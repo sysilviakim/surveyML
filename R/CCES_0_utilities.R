@@ -27,7 +27,7 @@ library(xtable)
 ## Functions ===================================================================
 file_path_fxn <- function(data = "CCES") {
   file.path(
-    "output", data, 
+    "output", data,
     method, paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
   )
 }
@@ -65,7 +65,7 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
   ## Keep only non-NA values for depvar
   df <- df %>% filter(!is.na(!!as.name(dep)))
 
-  ## Zero-variance columns or columns with many responses, except dbl 
+  ## Zero-variance columns or columns with many responses, except dbl
   ## e.g. birth year
   temp <- df %>%
     map(~ (length(unique(.x)) < 2 | length(unique(.x)) > 20)) %>%
@@ -149,10 +149,10 @@ train_name_clean <- function(temp) {
   return(temp)
 }
 
-train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL, 
+train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
                         seed = 100) {
   set.seed(seed)
-  
+
   if (is.null(tc)) {
     tc <- trainControl(
       method = "cv",
@@ -266,7 +266,8 @@ perf_routine <- function(method, x, test, dv, verbose = TRUE) {
   p2 <- pred.probs[, dv[2]]
 
   output[["pred.factor"]] <- pred.factor <- factor(
-    ifelse(p2 < 0.5, dv[1], dv[2]), levels = dv
+    ifelse(p2 < 0.5, dv[1], dv[2]),
+    levels = dv
   )
 
   ## Confusion matrix contains accuracy (+CI)
@@ -298,7 +299,7 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
     Year = yr,
     AUC = perf %>% map(dv) %>% map(method) %>% map(set) %>%
       map(~ .x$auc) %>% unlist(),
-    Accuracy =  perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy = perf %>% map(dv) %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[[1]]) %>%
       unlist(),
     CI = perf %>% map(dv) %>% map(method) %>% map(set) %>%
@@ -340,8 +341,8 @@ vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2016, by = 4),
     ) %>%
     ggplot(
       aes(
-        x = Year, y = `Variable Importance`, group = !!as.name(names), 
-        colour = !!as.name(names), fill = !!as.name(names), 
+        x = Year, y = `Variable Importance`, group = !!as.name(names),
+        colour = !!as.name(names), fill = !!as.name(names),
         linetype = !!as.name(names)
       )
     ) +
@@ -360,7 +361,8 @@ vi_bottom <- function(p, nrow = 2, key = 1) {
     )
 }
 
-po_plot <- function(x, metric, years = seq(2008, 2020, by = 2)) {
+po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
+                    ylim = c(0.38, 1.0)) {
   p <- ggplot(
     x, aes(
       x = Year, y = !!as.name(metric), group = Set, colour = Set, linetype = Set
@@ -376,8 +378,11 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2)) {
     guides(
       colour = guide_legend(nrow = 2, byrow = TRUE),
       linetype = guide_legend(nrow = 2, byrow = TRUE)
-    ) + 
-    scale_y_continuous(limits = c(0.38, 1.0))
+    )
+
+  if (!is.null(ylim)) {
+    p <- p + scale_y_continuous(limits = ylim)
+  }
   return(p)
 }
 
@@ -387,6 +392,10 @@ options(
   java.parameters = "-Xmx32g",
   digits = 4,
   scipen = 100
+)
+
+set_labels <- c(
+  "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates"
 )
 
 ### Jan's fit_control_basic equivalent
@@ -483,7 +492,7 @@ vl <- list(
     "employ.7" = "Employment: Homemaker",
     "employ.8" = "Employment: Student",
     "employ.9" = "Employment: Other",
-    "V208.2" = "Gender", 
+    "V208.2" = "Gender",
     "V211.2" = "Black",
     "V211.3" = "Hispanic",
     "V211.4" = "Asian",
@@ -496,14 +505,14 @@ vl <- list(
     "V213.4" = "Education: 2-year",
     "V213.5" = "Education: 4-year",
     "V213.6" = "Education: Post-grad",
-    "V246.2" = "Income: $10,000-$14,999", 
-    "V246.3" = "Income: $15,000-$19,999", 
-    "V246.4" = "Income: $20,000-$24,999", 
-    "V246.5" = "Income: $25,000-$29,999", 
-    "V246.6" = "Income: $30,000-$39,999", 
-    "V246.7" = "Income: $40000-$49,999", 
-    "V246.8" = "Income: $50,000-$59,999", 
-    "V246.9" = "Income: $60,000-$69,999", 
+    "V246.2" = "Income: $10,000-$14,999",
+    "V246.3" = "Income: $15,000-$19,999",
+    "V246.4" = "Income: $20,000-$24,999",
+    "V246.5" = "Income: $25,000-$29,999",
+    "V246.6" = "Income: $30,000-$39,999",
+    "V246.7" = "Income: $40000-$49,999",
+    "V246.8" = "Income: $50,000-$59,999",
+    "V246.9" = "Income: $60,000-$69,999",
     "V246.10" = "Income: $70,000-$79,999",
     "V246.11" = "Income: $80,000-$99,999",
     "V246.12" = "Income: $100,000-$119,999",
@@ -1293,5 +1302,3 @@ vl[["anes"]] <- c(
   "vcf9275_3" = "Blacks have influence on American politics: too little",
   "vcf9275_999" = "(Blacks have influence on American politics: answer missing)"
 )
-
-
