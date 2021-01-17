@@ -58,13 +58,10 @@ for (yr in rev(seq(2006, 2018, 2))) {
   }
 }
 
-# Error in eval(predvars, data, env) : year 2010 sfx 2008vote
-# object 'v403_did_not_complete_wave_2' not found
-# In addition: There were 16 warnings (use warnings() to see them)
-# 16: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  ...:
-# prediction from a rank-deficient fit may be misleading
-
 ## Pres Vote Choice, Random Forest =============================================
+load("output/CCES/CCES_perf.RData")
+load("output/CCES/CCES_varimp.RData")
+
 tab <- seq(4) %>%
   map(
     ~ perf_summ(
@@ -74,9 +71,7 @@ tab <- seq(4) %>%
   ) %>%
   bind_rows(.id = "Set") %>%
   arrange(desc(Year), Set) %>%
-  mutate(
-    Set = factor(Set, levels = seq(4), labels = set_labels)
-  ) %>%
+  mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
   rename(`Variable Specification` = Set) %>%
   filter(Year != 2006) %>%
   xtable(

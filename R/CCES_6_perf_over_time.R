@@ -50,29 +50,29 @@ summ_df <- summ_df %>%
 save(summ_df, file = "data/cces-tidy/perf_summ_CCES_Nationscape.Rda")
 
 # Export figures ===============================================================
-pdf("fig/CCES/rf/CCES_Nationscape_accuracy_overtime.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_NS_accuracy_overtime.pdf", width = 6, height = 4)
 Kmisc::pdf_default(po_plot(summ_df, metric = "Accuracy")) +
   theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
   scale_y_continuous(limits = c(0.5, 1.0))
 dev.off()
 
-pdf("fig/CCES/rf/CCES_Nationscape_auc_overtime.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_NS_auc_overtime.pdf", width = 6, height = 4)
 Kmisc::pdf_default(po_plot(summ_df, metric = "AUC")) +
   theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
   scale_y_continuous(limits = c(0.5, 1.0))
 dev.off()
 
-pdf("fig/CCES/rf/CCES_Nationscape_prec_overtime.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_NS_prec_overtime.pdf", width = 6, height = 4)
 Kmisc::pdf_default(po_plot(summ_df, metric = "Precision")) +
   theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
 dev.off()
 
-pdf("fig/CCES/rf/CCES_Nationscape_recall_overtime.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_NS_recall_overtime.pdf", width = 6, height = 4)
 Kmisc::pdf_default(po_plot(summ_df, metric = "Recall")) +
   theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
 dev.off()
 
-pdf("fig/CCES/rf/CCES_Nationscape_F1_overtime.pdf", width = 6, height = 4)
+pdf("fig/CCES/rf/CCES_NS_F1_overtime.pdf", width = 6, height = 4)
 Kmisc::pdf_default(po_plot(summ_df, metric = "F1")) +
   theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
   scale_y_continuous(limits = c(0.5, 1.0))
@@ -95,7 +95,7 @@ p <- summ_df %>%
   scale_y_continuous(limits = c(0.6, 0.7))
 
 pdf(
-  "fig/CCES/rf/CCES_Nationscape_demo_acc_range_overtime.pdf", 
+  "fig/CCES/rf/CCES_NS_demo_acc_range_overtime.pdf", 
   width = 6, height = 4
 )
 Kmisc::pdf_default(p)
