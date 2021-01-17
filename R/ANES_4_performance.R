@@ -14,7 +14,7 @@ for (yr in as.character(seq(1952, 2016, by = 4))) {
   temp <- anes_onehot[[as.character(yr)]]
 
   ## caret results
-  for (method in c("cart", "rf")) { ## "lasso", "logit", 
+  for (method in c("logit", "cart", "rf")) {
     for (varset in seq(4)) {
       ## Load previously run results
       load(

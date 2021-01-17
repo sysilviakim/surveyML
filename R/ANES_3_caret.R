@@ -19,6 +19,14 @@ for (yr in as.character(seq(1952, 2016, by = 4))) {
     message(paste0("Variable set is ", varset))
     message(paste0("# of columns in train set: ", dim(temp$train)[2]))
     
+    ### Logit
+    method <- "logit"
+    turn.logit <- train_1line(temp, method = method)
+    save(turn.logit, file = file_path_fxn(data = "ANES"))
+    rm(turn.logit)
+    gc(reset = TRUE)
+    message("Logit finished.")
+    
     ### CART
     method <- "cart"
     turn.cart <- train_1line(temp, method = "rpart")
