@@ -1,5 +1,11 @@
 source("R/utilities.R")
 
+if (!dir.exists("output/CCES/logit")) {
+  dir.create("output/CCES/logit", recursive = TRUE)
+  dir.create("output/CCES/cart", recursive = TRUE)
+  dir.create("output/CCES/rf", recursive = TRUE)
+}
+
 ## loop to enable gc()
 ## cforest not included
 

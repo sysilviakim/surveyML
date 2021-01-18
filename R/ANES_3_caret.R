@@ -2,6 +2,12 @@ source("R/utilities.R")
 load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 load(file.path("data", "anes-tidy", "anes-vl.RData"))
 
+if (!dir.exists("output/ANES/logit")) {
+  dir.create("output/ANES/logit", recursive = TRUE)
+  dir.create("output/ANES/cart", recursive = TRUE)
+  dir.create("output/ANES/rf", recursive = TRUE)
+}
+
 sfx <- "prezvote"
 for (yr in as.character(seq(1952, 2016, by = 4))) {
   for (varset in seq(4)) {
