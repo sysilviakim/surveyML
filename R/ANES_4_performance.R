@@ -1,4 +1,4 @@
-source("R/CCES_0_utilities.R")
+source("R/utilities.R")
 load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 
 ## Extract performance measures ================================================

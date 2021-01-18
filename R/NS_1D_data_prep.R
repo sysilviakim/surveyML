@@ -151,7 +151,7 @@ a_analysis <- a_release2 %>%
 
 # devtools::install_github("sysilviakim/Kmisc")
 # library(Kmisc)
-# source("CCES_0_utilities.R")
+# source("utilities.R")
 #
 #
 # var_db <- data_routine(a_analysis %>% select(-monthyear),
