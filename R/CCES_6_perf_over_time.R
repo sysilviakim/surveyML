@@ -7,9 +7,7 @@ load("output/CCES/CCES_varimp.RData")
 summ_df <- seq(4) %>%
   map(
     ~ perf_summ(
-      within(perf, rm("year2006")),
-      1, "rf", .x,
-      yr = rev(seq(2008, 2018, 2))
+      within(perf, rm("year2006")), 1, "rf", .x, yr = rev(seq(2008, 2018, 2))
     )
   ) %>%
   bind_rows(.id = "Set")
@@ -51,20 +49,26 @@ save(summ_df, file = "data/cces-tidy/perf_summ_CCES_Nationscape.Rda")
 
 # Export figures ===============================================================
 pdf("fig/CCES/rf/CCES_NS_accuracy_overtime.pdf", width = 6, height = 4)
-pdf_default(po_plot(summ_df, metric = "Accuracy")) +
-  theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-  scale_y_continuous(limits = c(0.5, 1.0))
+print(
+  pdf_default(po_plot(summ_df, metric = "Accuracy")) +
+    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+    scale_y_continuous(limits = c(0.5, 1.0))
+)
 dev.off()
 
 pdf("fig/CCES/rf/CCES_NS_auc_overtime.pdf", width = 6, height = 4)
-pdf_default(po_plot(summ_df, metric = "AUC")) +
-  theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-  scale_y_continuous(limits = c(0.5, 1.0))
+print(
+  pdf_default(po_plot(summ_df, metric = "AUC")) +
+    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+    scale_y_continuous(limits = c(0.5, 1.0))
+)
 dev.off()
 
 pdf("fig/CCES/rf/CCES_NS_prec_overtime.pdf", width = 6, height = 4)
-pdf_default(po_plot(summ_df, metric = "Precision")) +
-  theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
+print(
+  pdf_default(po_plot(summ_df, metric = "Precision")) +
+    theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
+)
 dev.off()
 
 pdf("fig/CCES/rf/CCES_NS_recall_overtime.pdf", width = 6, height = 4)
@@ -73,9 +77,11 @@ pdf_default(po_plot(summ_df, metric = "Recall")) +
 dev.off()
 
 pdf("fig/CCES/rf/CCES_NS_F1_overtime.pdf", width = 6, height = 4)
-pdf_default(po_plot(summ_df, metric = "F1")) +
-  theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-  scale_y_continuous(limits = c(0.5, 1.0))
+print(
+  pdf_default(po_plot(summ_df, metric = "F1")) +
+    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+    scale_y_continuous(limits = c(0.5, 1.0))
+)
 dev.off()
 
 ## Demographics Accuracy Range
@@ -94,9 +100,6 @@ p <- summ_df %>%
   scale_x_continuous(breaks = seq(2008, 2020, by = 2)) +
   scale_y_continuous(limits = c(0.6, 0.7))
 
-pdf(
-  "fig/CCES/rf/CCES_NS_demo_acc_range_overtime.pdf", 
-  width = 6, height = 4
-)
-pdf_default(p)
+pdf("fig/CCES/rf/CCES_NS_demo_acc_range_overtime.pdf", width = 6, height = 4)
+print(pdf_default(p))
 dev.off()
