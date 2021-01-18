@@ -32,22 +32,6 @@ file_path_fxn <- function(data = "CCES") {
   )
 }
 
-loadRData <- function(file_name) {
-  load(file_name)
-  get(ls()[ls() != "file_name"])
-}
-
-rep_seeds <- function(folds = 10, n = 1e4, seed = 123) {
-  set.seed(seed)
-  ## (n_repeats * nresampling) + 1
-  seeds <- vector(mode = "list", length = folds + 1)
-  for (i in seq(folds)) {
-    seeds[[i]] <- sample.int(n = n, n)
-  }
-  seeds[[folds + 1]] <- sample.int(n = n, 1)
-  return(seeds)
-}
-
 one_hot <- function(df) {
   x <- predict(caret::dummyVars(~., df, fullRank = TRUE), df)
   output <- as_tibble(x)
@@ -370,7 +354,9 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
   ) +
     geom_line(size = 1) +
     scale_x_continuous(breaks = years) +
-    scale_color_viridis_d(direction = -1, name = "Variable Specification") +
+    scale_color_viridis_d(
+      direction = -1, name = "Variable Specification", end = 0.8
+    ) +
     scale_linetype_manual(
       name = "Variable Specification",
       values = c("solid", "twodash", "dotted", "dashed")
@@ -384,6 +370,209 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
     p <- p + scale_y_continuous(limits = ylim)
   }
   return(p)
+}
+
+# Within-year, between-set intersection fxn
+vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20) {
+  x %>%
+    map(y) %>%
+    map("rf") %>%
+    map(
+      ~ Reduce(
+        intersect,
+        .x %>%
+          map(
+            function(x) {
+              x %>%
+                arrange(desc(Overall)) %>%
+                slice_head(n = top) %>%
+                .$rownames
+            }
+          ) %>%
+          .[from:to]
+      )
+    ) %>%
+    map(
+      ~ tibble(x := .x) %>%
+        t() %>%
+        as_tibble(.name_repair = "unique") %>%
+        # Adjusting to new .name_repair conventions
+        rename_all(~ gsub("...", "V", .x))
+    ) %>%
+    bind_rows(.id = "Year") %>%
+    mutate(Year = gsub("year", "", Year)) %>%
+    mutate_all(~ if_else(. %in% c("gender.2", "V208.2"), "Gender", .)) %>%
+    mutate_all(~ if_else(. %in% c("birthyr", "V207", "v207"), "Age", .)) %>%
+    mutate_all(
+      ~ if_else(. %in% c("race.2", "V211.2", "v211_black"), "Black", .)
+    ) %>%
+    mutate_all(~ if_else(. %in% c("race.3", "V211.3"), "Hispanic", .)) %>%
+    mutate_all(
+      ~ if_else(
+        . %in% paste0(pid_vec, ".2"), "Not very strong Democrat",
+        if_else(
+          . %in% paste0(pid_vec, ".3"), "Lean Democrat",
+          if_else(
+            . %in% paste0(pid_vec, ".4"), "Independent",
+            if_else(
+              . %in% paste0(pid_vec, ".5"), "Lean Republican",
+              if_else(
+                . %in% paste0(pid_vec, ".6"), "Not very strong Republican",
+                if_else(
+                  . %in% paste0(pid_vec, ".7"), "Strong Republican", .
+                )
+              )
+            )
+          )
+        )
+      )
+    ) %>%
+    mutate_all(
+      ~ if_else(
+        . %in% paste0(educ_vec, ".2"), "High school graduate",
+        if_else(
+          . %in% c(paste0(educ_vec, ".3"), "v213_some_college"), "Some college",
+          if_else(
+            . %in% c(paste0(educ_vec, ".4"), "v213_2_year"), "2-year college",
+            if_else(
+              . %in% c(paste0(educ_vec, ".5"), "v213_4_year"), "4-year college",
+              if_else(
+                . %in% paste0(educ_vec, ".6"), "Post-grad", .
+              )
+            )
+          )
+        )
+      )
+    )
+}
+
+# Between-year, within-set intersection fxn
+vi_inter_within <- function(x, y = 1, set = 4, top = 20) {
+  x %>%
+    map(y) %>%
+    map("rf") %>%
+    map(set) %>%
+    map(
+      ~ .x %>%
+        arrange(desc(Overall)) %>%
+        slice_head(n = top) %>%
+        .$rownames
+    )
+  ## Much more manual tagging, I'm afraid.
+}
+
+# Varimp over time fxn
+vi_ts_demo <- function(x, y = 1, set = 4, method = "rf",
+                       names = "Demographics", yrs = seq(2008, 2018, by = 2)) {
+  x %>%
+    map(y) %>%
+    map(method) %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(
+            rownames %in% c("gender.2", "v208_female", "V208.2", "v2004.2")
+          ) %>%
+          select(Gender = Overall),
+        .x %>%
+          filter(rownames %in% c("birthyr", "V207", "v207")) %>%
+          select(Age = Overall),
+        .x %>%
+          filter(rownames %in% c("race.2", "V211.2", "v211_black")) %>%
+          select(Black = Overall),
+        .x %>%
+          filter(rownames %in% c("race.3", "V211.3", "v211_hispanic")) %>%
+          select(Hispanic = Overall)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs)
+}
+
+vi_ts_edu <- function(x, y = 1, set = 4, method = "rf",
+                      names = "Demographics", yrs = seq(2008, 2018, by = 2),
+                      lvl = c(
+                        "HS Graduate", "Some College",
+                        "2-year", "4-year", "Post-grad"
+                      )) {
+  x %>%
+    map(y) %>%
+    map(method) %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(
+            rownames %in% c("educ.2", "v213_high_school_graduate", "V213.2")
+          ) %>%
+          select(`HS Graduate` = Overall),
+        .x %>%
+          filter(rownames %in% c("educ.3", "v213_some_college", "V213.3")) %>%
+          select(`Some College` = Overall),
+        .x %>%
+          filter(rownames %in% c("educ.4", "v213_2_year", "V213.4")) %>%
+          select(`2-year` = Overall),
+        .x %>%
+          filter(rownames %in% c("educ.5", "v213_4_year", "V213.5")) %>%
+          select(`4-year` = Overall),
+        .x %>%
+          filter(rownames %in% c("educ.6", "v213_post_grad", "V213.6")) %>%
+          select(`Post-grad` = Overall)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
+}
+
+vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "Party ID",
+                      yrs = seq(2008, 2018, by = 2),
+                      lvl = rev(c(
+                        "Weak Democrat", "Lean Democrat", "Independent",
+                        "Lean Republican", "Weak Republican",
+                        "Strong Republican"
+                      ))) {
+  x %>%
+    map(y) %>%
+    map(method) %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(
+            rownames %in% c(
+              "pid7.2", "v212d_not_very_strong_democrat", "CC307a.2"
+            )
+          ) %>%
+          select(`Weak Democrat` = Overall), ## Not very strong Democrat
+        .x %>%
+          filter(
+            rownames %in% c("pid7.3", "v212d_lean_democrat", "CC307a.3")
+          ) %>%
+          select(`Lean Democrat` = Overall),
+        .x %>%
+          filter(
+            rownames %in% c("pid7.4", "v212d_independent", "CC307a.4")
+          ) %>%
+          select(`Independent` = Overall),
+        .x %>%
+          filter(
+            rownames %in% c("pid7.5", "v212d_lean_republican", "CC307a.5")
+          ) %>%
+          select(`Lean Republican` = Overall),
+        .x %>%
+          filter(
+            rownames %in% c(
+              "pid7.6", "v212d_not_very_strong_democrat", "CC307a.6"
+            )
+          ) %>%
+          select(`Weak Republican` = Overall), ## Not very strong Republican
+        .x %>%
+          filter(
+            rownames %in% c("pid7.7", "v212d_strong_democrat", "CC307a.7")
+          ) %>%
+          select(`Strong Republican` = Overall)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
 ## Extra Setup =================================================================
