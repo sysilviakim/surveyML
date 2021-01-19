@@ -336,12 +336,12 @@ vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2016, by = 4),
     scale_linetype_discrete()
 }
 
-vi_bottom <- function(p, nrow = 2, key = 1) {
+vi_bottom <- function(p, nrow = 2, key = 1, kh = .5) {
   p +
     theme(legend.position = "bottom", legend.key.width = unit(key, "cm")) +
     guides(
-      colour = guide_legend(nrow = nrow, byrow = TRUE),
-      linetype = guide_legend(nrow = nrow, byrow = TRUE)
+      colour = guide_legend(nrow = nrow, byrow = TRUE, keyheight = kh),
+      linetype = guide_legend(nrow = nrow, byrow = TRUE, keyheight = kh)
     )
 }
 
@@ -373,8 +373,9 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 }
 
 # Within-year, between-set intersection fxn
-vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20) {
-  x %>%
+vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20,
+                         pid_vec, educ_vec, survey = "CCES") {
+  out <- x %>%
     map(y) %>%
     map("rf") %>%
     map(
@@ -400,50 +401,118 @@ vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20) {
         rename_all(~ gsub("...", "V", .x))
     ) %>%
     bind_rows(.id = "Year") %>%
-    mutate(Year = gsub("year", "", Year)) %>%
-    mutate_all(~ if_else(. %in% c("gender.2", "V208.2"), "Gender", .)) %>%
-    mutate_all(~ if_else(. %in% c("birthyr", "V207", "v207"), "Age", .)) %>%
-    mutate_all(
-      ~ if_else(. %in% c("race.2", "V211.2", "v211_black"), "Black", .)
-    ) %>%
-    mutate_all(~ if_else(. %in% c("race.3", "V211.3"), "Hispanic", .)) %>%
-    mutate_all(
-      ~ if_else(
-        . %in% paste0(pid_vec, ".2"), "Not very strong Democrat",
-        if_else(
-          . %in% paste0(pid_vec, ".3"), "Lean Democrat",
+    mutate(Year = gsub("year", "", Year))
+
+  if (survey == "CCES") {
+    out <- out %>%
+      mutate_all(~ if_else(. %in% c("gender.2", "V208.2"), "Gender", .)) %>%
+      mutate_all(~ if_else(. %in% c("birthyr", "V207", "v207"), "Age", .)) %>%
+      mutate_all(
+        ~ if_else(. %in% c("race.2", "V211.2", "v211_black"), "Black", .)
+      ) %>%
+      mutate_all(~ if_else(. %in% c("race.3", "V211.3"), "Hispanic", .)) %>%
+      mutate_all(
+        ~ if_else(
+          . %in% paste0(pid_vec, ".2"), "Not very strong Democrat",
           if_else(
-            . %in% paste0(pid_vec, ".4"), "Independent",
+            . %in% paste0(pid_vec, ".3"), "Lean Democrat",
             if_else(
-              . %in% paste0(pid_vec, ".5"), "Lean Republican",
+              . %in% paste0(pid_vec, ".4"), "Independent",
               if_else(
-                . %in% paste0(pid_vec, ".6"), "Not very strong Republican",
+                . %in% paste0(pid_vec, ".5"), "Lean Republican",
                 if_else(
-                  . %in% paste0(pid_vec, ".7"), "Strong Republican", .
+                  . %in% paste0(pid_vec, ".6"), "Not very strong Republican",
+                  if_else(
+                    . %in% paste0(pid_vec, ".7"), "Strong Republican", .
+                  )
+                )
+              )
+            )
+          )
+        )
+      ) %>%
+      mutate_all(
+        ~ if_else(
+          . %in% paste0(educ_vec, ".2"), "High school graduate",
+          if_else(
+            . %in% c(paste0(educ_vec, ".3"), "v213_some_college"),
+            "Some college",
+            if_else(
+              . %in% c(paste0(educ_vec, ".4"), "v213_2_year"), "2-year college",
+              if_else(
+                . %in% c(paste0(educ_vec, ".5"), "v213_4_year"),
+                "4-year college",
+                if_else(
+                  . %in% paste0(educ_vec, ".6"), "Post-grad", .
                 )
               )
             )
           )
         )
       )
-    ) %>%
-    mutate_all(
-      ~ if_else(
-        . %in% paste0(educ_vec, ".2"), "High school graduate",
-        if_else(
-          . %in% c(paste0(educ_vec, ".3"), "v213_some_college"), "Some college",
+  } else if (survey == "ANES") {
+    out <- out %>%
+      mutate_all(~ if_else(. %in% c("vcf0104_2"), "Gender", .)) %>%
+      mutate_all(~ if_else(. %in% c("vcf0101"), "Age", .)) %>%
+      mutate_all(~ if_else(. %in% c("vcf0105b_2"), "Black", .)) %>%
+      mutate_all(~ if_else(. %in% c("vcf0105b_3"), "Hispanic", .)) %>%
+      mutate_all(~ if_else(. %in% c("vcf0105b_4"), "Other Race", .)) %>%
+      mutate_all(
+        ~ if_else(
+          . %in% paste0(pid_vec, "_2"), "Not very strong Democrat",
           if_else(
-            . %in% c(paste0(educ_vec, ".4"), "v213_2_year"), "2-year college",
+            . %in% paste0(pid_vec, "_3"), "Lean Democrat",
             if_else(
-              . %in% c(paste0(educ_vec, ".5"), "v213_4_year"), "4-year college",
+              . %in% paste0(pid_vec, "_4"), "Independent",
               if_else(
-                . %in% paste0(educ_vec, ".6"), "Post-grad", .
+                . %in% paste0(pid_vec, "_5"), "Lean Republican",
+                if_else(
+                  . %in% paste0(pid_vec, "_6"), "Not very strong Republican",
+                  if_else(
+                    . %in% paste0(pid_vec, "_7"), "Strong Republican", .
+                  )
+                )
+              )
+            )
+          )
+        )
+      ) %>%
+      mutate_all(
+        ~ if_else(
+          . %in% paste0(educ_vec, "_2"), "High school graduate",
+          if_else(
+            . %in% c(paste0(educ_vec, "_3")), "Some college",
+            if_else(
+              . %in% c(paste0(educ_vec, "_4")), "2-year college",
+              if_else(
+                . %in% c(paste0(educ_vec, "_5")), "4-year college",
+                if_else(
+                  . %in% paste0(educ_vec, "_6"), "Post-grad", .
+                )
+              )
+            )
+          )
+        )
+      ) %>%
+      mutate_all(
+        ~ if_else(
+          . %in% c("vcf0114_2"), "Income: 17-33 %tile",
+          if_else(
+            . %in% c("vcf0114_3"), "Income: 34-67 %tile",
+            if_else(
+              . %in% c("vcf0114_4"), "Income: 68-95 %tile",
+              if_else(
+                . %in% c("vcf0114_5"), "Income: 96-100 %tile",
+                if_else(
+                  . %in% c("vcf0114_999"), "Income: refused", .
+                )
               )
             )
           )
         )
       )
-    )
+  }
+  return(out)
 }
 
 # Between-year, within-set intersection fxn
@@ -461,9 +530,9 @@ vi_inter_within <- function(x, y = 1, set = 4, top = 20) {
   ## Much more manual tagging, I'm afraid.
 }
 
-# Varimp over time fxn
+# Varimp over time fxns (CCES)
 vi_ts_demo <- function(x, y = 1, set = 4, method = "rf",
-                       names = "Demographics", yrs = seq(2008, 2018, by = 2)) {
+                       names = "Demo.", yrs = seq(2008, 2018, by = 2)) {
   x %>%
     map(y) %>%
     map(method) %>%
@@ -490,7 +559,7 @@ vi_ts_demo <- function(x, y = 1, set = 4, method = "rf",
 }
 
 vi_ts_edu <- function(x, y = 1, set = 4, method = "rf",
-                      names = "Demographics", yrs = seq(2008, 2018, by = 2),
+                      names = "Demo.", yrs = seq(2008, 2018, by = 2),
                       lvl = c(
                         "HS Graduate", "Some College",
                         "2-year", "4-year", "Post-grad"
@@ -523,7 +592,7 @@ vi_ts_edu <- function(x, y = 1, set = 4, method = "rf",
     vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
-vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "Party ID",
+vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "PID",
                       yrs = seq(2008, 2018, by = 2),
                       lvl = rev(c(
                         "Weak Democrat", "Lean Democrat", "Independent",
@@ -569,6 +638,93 @@ vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "Party ID",
           filter(
             rownames %in% c("pid7.7", "v212d_strong_democrat", "CC307a.7")
           ) %>%
+          select(`Strong Republican` = Overall)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
+}
+
+# Varimp over time fxns (ANES)
+vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
+                        names = "Demographics", yrs = seq(1952, 2016, by = 4)) {
+  x %>%
+    map(y) %>%
+    map(method) %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(grepl("vcf0104_2", rownames)) %>% select(Gender = Overall),
+        .x %>%
+          filter(grepl("vcf0101", rownames)) %>% select(Age = Overall),
+        .x %>%
+          filter(grepl("vcf0105b_2", rownames)) %>% select(Black = Overall),
+        ## For some years, race beyond white and black not there
+        .x %>%
+          filter(grepl("vcf0105b_3", rownames)) %>%
+          select(Hispanic = Overall) %>%
+          bind_rows(., data.frame(Hispanic = NA)) %>%
+          slice(1)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs)
+}
+
+vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
+                       names = "Demographics", yrs = seq(1952, 2016, by = 4),
+                       lvl = c(
+                         "HS Graduate", "Some College", "College+"
+                       )) {
+  x %>%
+    map(y) %>%
+    map(method) %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(grepl("vcf0110_2", rownames)) %>%
+          select(`HS Graduate` = Overall),
+        .x %>%
+          filter(grepl("vcf0110_3", rownames)) %>%
+          select(`Some College` = Overall),
+        .x %>%
+          filter(grepl("vcf0110_4", rownames)) %>%
+          select(`College+` = Overall)
+      )
+    ) %>%
+    vi_fin(names = names, yrs = yrs, lvl = lvl)
+}
+
+vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
+                       yrs = seq(1952, 2016, by = 4),
+                       lvl = rev(c(
+                         "Weak Democrat", "Lean Democrat", "Independent",
+                         "Lean Republican", "Weak Republican",
+                         "Strong Republican"
+                       ))) {
+  x %>%
+    map(y) %>%
+    map("rf") %>%
+    map(set) %>%
+    map(
+      ~ bind_cols(
+        .x %>%
+          filter(grepl("vcf0301_2", rownames)) %>%
+          select(`Weak Democrat` = Overall),
+        .x %>%
+          filter(grepl("vcf0301_3", rownames)) %>%
+          select(`Lean Democrat` = Overall),
+        .x %>%
+          filter(grepl("vcf0301_4", rownames)) %>%
+          select(`Independent` = Overall),
+        .x %>%
+          filter(grepl("vcf0301_5", rownames)) %>%
+          select(`Lean Republican` = Overall),
+        .x %>%
+          filter(grepl("vcf0301_6", rownames)) %>%
+          select(`Weak Republican` = Overall),
+        .x %>%
+          filter(grepl("vcf0301_7", rownames)) %>%
           select(`Strong Republican` = Overall)
       )
     ) %>%
