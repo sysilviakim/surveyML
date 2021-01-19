@@ -10,7 +10,7 @@ fig/CCES/rf/*_senate_*
 fig/CCES/rf/*_house_*
 fig/CCES/rf/*approval*
 fig/*/old/*
-tab/*/old/*
+tab/old/*
 *varrf*
 *varcart*
 *varlogit*
