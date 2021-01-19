@@ -6,13 +6,18 @@ get_performance_stats <- function(oos_which) {
   output <- list()
   
   output[["pred.compare"]] <- ROCR::prediction(
-    oos_which$predictions[, 2], as.numeric(Xm_testSet_adjusted$trump2Pvote_intent) - 1
+    oos_which$predictions[, 2], 
+    as.numeric(Xm_testSet_adjusted$trump2Pvote_intent) - 1
   )
   
-  output[["AUC"]] <- ROCR::performance(output[["pred.compare"]], "auc")@y.values[[1]]
-  output[["Perf"]] <- ROCR::performance(output[["pred.compare"]], "tpr", "fpr")
-  output[["Prec"]] <- ROCR::performance(output[["pred.compare"]], "prec", "rec")
-  output[["F1"]] <- ROCR::performance(output[["pred.compare"]], "f")
+  output[["AUC"]] <- 
+    ROCR::performance(output[["pred.compare"]], "auc")@y.values[[1]]
+  output[["Perf"]] <- 
+    ROCR::performance(output[["pred.compare"]], "tpr", "fpr")
+  output[["Prec"]] <- 
+    ROCR::performance(output[["pred.compare"]], "prec", "rec")
+  output[["F1"]] <- 
+    ROCR::performance(output[["pred.compare"]], "f")
   
   output
 }
