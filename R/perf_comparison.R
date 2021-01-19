@@ -1,6 +1,13 @@
 source("R/utilities.R")
 
-# Import performance summaries =================================================
+# Import raw and summarized performance ========================================
+raw_list <- list(
+  ANES_pf = loadRData("output/ANES/ANES_perf.RData"),
+  ANES_vi = loadRData("output/ANES/ANES_varimp.RData"),
+  CCES_pf = loadRData("output/CCES/CCES_perf.RData"),
+  CCES_vi = loadRData("output/CCES/CCES_varimp.RData")
+)
+
 perf <- list(
   CCNS = loadRData("data/cces-tidy/perf_summ_CCES_Nationscape.Rda") %>%
     mutate(Survey = "CCES/NS"),
@@ -50,8 +57,8 @@ print(
 )
 dev.off()
 
-## Demographics Accuracy Range
-p <- perf %>%
+## Accuracy Range By Specification =============================================
+temp <- perf %>%
   rowwise() %>%
   mutate(
     Survey = case_when(
@@ -59,22 +66,51 @@ p <- perf %>%
       Survey == "CCES/NS" & Year != 2020 ~ "CCES",
       TRUE ~ "ANES"
     )
-  ) %>%
-  filter(Set == "Demographics Only") %>%
-  select(Year, CI, Accuracy, Survey) %>%
-  rowwise() %>%
-  mutate(
-    lower = str_match_all(CI, "\\[(.*?),")[[1]][, 2],
-    upper = str_match_all(CI, " (.*?)\\]")[[1]][, 2]
-  ) %>%
-  select(-CI) %>%
-  mutate_at(vars(lower, upper), as.numeric) %>%
-  ggplot(aes(x = Year, y = Accuracy, color = Survey)) +
-  geom_pointrange(aes(ymin = lower, ymax = upper)) +
-  scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
-  scale_y_continuous(limits = c(0.45, 0.8)) +
-  scale_color_viridis_d(end = 0.85)
+  )
 
-pdf("fig/survey_rf_demo_accrange_ts.pdf", width = 7, height = 4)
-print(pdf_default(p))
-dev.off()
+levels(perf$Set) %>%
+  set_names(., nm = paste0("spec", seq(4))) %>%
+  map(
+    ~ temp %>%
+      filter(Set == .x) %>%
+      select(Year, Accuracy_lower, Accuracy_upper, Accuracy, Survey) %>%
+      ggplot(aes(x = Year, y = Accuracy, color = Survey)) +
+      geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper)) +
+      scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
+      scale_y_continuous(limits = c(0.45, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
+      scale_color_viridis_d(end = 0.85)
+  ) %>%
+  imap(
+    ~ {
+      pdf(
+        paste0("fig/survey_rf_accrange_ts_", .y, ".pdf"), 
+        width = 7, height = 4
+      )
+      print(pdf_default(.x))
+      dev.off()
+    }
+  )
+
+## Similarly, AUC Ranges =======================================================
+levels(perf$Set) %>%
+  set_names(., nm = paste0("spec", seq(4))) %>%
+  map(
+    ~ temp %>%
+      filter(Set == .x) %>%
+      select(Year, AUC_lower, AUC_upper, AUC, Survey) %>%
+      ggplot(aes(x = Year, y = AUC, color = Survey)) +
+      geom_pointrange(aes(ymin = AUC_lower, ymax = AUC_upper)) +
+      scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
+      scale_y_continuous(limits = c(0.4, 1.0), breaks = seq(0.4, 1.0, 0.1)) +
+      scale_color_viridis_d(end = 0.85)
+  ) %>%
+  imap(
+    ~ {
+      pdf(
+        paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf"), 
+        width = 7, height = 4
+      )
+      print(pdf_default(.x))
+      dev.off()
+    }
+  )
