@@ -10,28 +10,10 @@ perf <- list(
   bind_rows()
 assert_that(length(unique(perf$Set)) == 4)
 
-#
-po_plot <- function(x, metric) {
-  ggplot(
-    x, aes(x = Year, y = !!as.name(metric), colour = Set, linetype = Survey)
-  ) +
-    geom_line(size = 1) +
-    scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
-    scale_color_viridis_d(
-      direction = -1, name = "Specification", end = 0.85
-    ) +
-    scale_linetype_manual(name = "Survey", values = c("solid", "dashed")) +
-    guides(
-      colour = guide_legend(nrow = 2, byrow = TRUE),
-      linetype = guide_legend(nrow = 2, byrow = TRUE)
-    ) +
-    scale_y_continuous(limits = c(0.38, 1.0))
-}
-
 # Export figures ===============================================================
 pdf("fig/survey_rf_accuracy_ts.pdf", width = 7, height = 4)
 print(
-  pdf_default(po_plot(perf, metric = "Accuracy")) +
+  pdf_default(po_full(perf, metric = "Accuracy")) +
     theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
     scale_y_continuous(limits = c(0.5, 1.0))
 )
@@ -39,7 +21,7 @@ dev.off()
 
 pdf("fig/survey_rf_auc_ts.pdf", width = 7, height = 4)
 print(
-  pdf_default(po_plot(perf, metric = "AUC")) +
+  pdf_default(po_full(perf, metric = "AUC")) +
     theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
     scale_y_continuous(limits = c(0.5, 1.0))
 )
@@ -47,14 +29,14 @@ dev.off()
 
 pdf("fig/survey_rf_prec_ts.pdf", width = 7, height = 4)
 print(
-  pdf_default(po_plot(perf, metric = "Precision")) +
+  pdf_default(po_full(perf, metric = "Precision")) +
     theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
 )
 dev.off()
 
 pdf("fig/survey_rf_recall_ts.pdf", width = 7, height = 4)
 print(
-  pdf_default(po_plot(perf, metric = "Recall")) +
+  pdf_default(po_full(perf, metric = "Recall")) +
     theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
     scale_y_continuous(limits = c(0.0, 1.0))
 )
@@ -62,7 +44,7 @@ dev.off()
 
 pdf("fig/survey_rf_F1_ts.pdf", width = 7, height = 4)
 print(
-  pdf_default(po_plot(perf, metric = "F1")) +
+  pdf_default(po_full(perf, metric = "F1")) +
     theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
     scale_y_continuous(limits = c(0.0, 1.0))
 )
@@ -91,7 +73,7 @@ p <- perf %>%
   geom_pointrange(aes(ymin = lower, ymax = upper)) +
   scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
   scale_y_continuous(limits = c(0.45, 0.8)) +
-  scale_color_viridis_d(end = 0.8)
+  scale_color_viridis_d(end = 0.85)
 
 pdf("fig/survey_rf_demo_accrange_ts.pdf", width = 7, height = 4)
 print(pdf_default(p))
