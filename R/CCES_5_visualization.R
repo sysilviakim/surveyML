@@ -1,14 +1,16 @@
 source("R/utilities.R")
 load("output/CCES/CCES_perf.RData")
 load("output/CCES/CCES_varimp.RData")
-pid_vec <- c("pid7", "V212d", "CC307a", "v3007")
-educ_vec <- c("educ", "V213")
+pv <- c("pid7", "V212d", "CC307a", "v3007")
+ev <- c("educ", "V213")
 
 # vote choice varimp intersection: tables ======================================
 
 # Do demographics linger in top n?
 # No, nothing until top 30
-vi_inter_btw(vid, y = 1, from = 1, to = 4, top = 20)
+vi_inter_btw(
+  vid, y = 1, from = 1, to = 4, top = 20, pid_vec = pv, educ_vec = ev
+)
 
 tab <- vi_inter_btw(
   within(vid, rm("year2006")),
@@ -16,15 +18,17 @@ tab <- vi_inter_btw(
 ) %>%
   xtable(
     label = "tab:CCES_vi_btw_sets_demo_1",
-    caption = paste0(
-      "Demographics Remaining Within Top 10 Variables,\n", 
-      "CCES (2008--2018), ",
-      "PID Included"
-    )
+    caption = NULL
+    # caption = paste0(
+    #   # Better without line break with \\\\
+    #   "Demographics Remaining Within Top 10 Variables, ",
+    #   "CCES (2008--2018), ",
+    #   "PID Included"
+    # )
   )
 print(
   tab,
-  file = "tab/CCES_rf_vi_btw_sets_demo_1.tex",
+  file = "tab/CCES_rf_vi_btw_sets_demo_1.tex", floating = FALSE,
   digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
@@ -34,15 +38,16 @@ tab <- vi_inter_btw(
 ) %>%
   xtable(
     label = "tab:CCES_vi_btw_sets_demo_2",
-    caption = paste0(
-      "Demographics Remaining Within Top 10 Variables,\n", 
-      "CCES (2008--2018), ",
-      "PID/Issues Included"
-    )
+    caption = NULL
+    # caption = paste0(
+    #   "Demographics Remaining Within Top 10 Variables, ",
+    #   "CCES (2008--2018), ",
+    #   "PID/Issues Included"
+    # )
   )
 print(
   tab,
-  file = "tab/CCES_rf_vi_btw_sets_demo_2.tex",
+  file = "tab/CCES_rf_vi_btw_sets_demo_2.tex", floating = FALSE,
   digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
@@ -70,19 +75,19 @@ p_list <- list(
 )
 
 # Export =======================================================================
-pdf("fig/CCES/rf/CCES_varimp_ts_set2_demo.pdf", width = 6, height = 4)
-print(vi_bottom(pdf_default(p_list$p1), nrow = 1))
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_demo.pdf", width = 4, height = 3.8)
+print(vi_bottom(pdf_default(p_list$p1), nrow = 3))
 dev.off()
-pdf("fig/CCES/rf/CCES_varimp_ts_set2_edu.pdf", width = 6, height = 4)
-print(vi_bottom(pdf_default(p_list$p2), nrow = 1))
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_edu.pdf", width = 4, height = 3.8)
+print(vi_bottom(pdf_default(p_list$p2), nrow = 3))
 dev.off()
 
-pdf("fig/CCES/rf/CCES_varimp_ts_set2_pid.pdf", width = 6, height = 4)
-print(vi_bottom(pdf_default(p_list$p3)))
+pdf("fig/CCES/rf/CCES_varimp_ts_set2_pid.pdf", width = 4, height = 3.8)
+print(vi_bottom(pdf_default(p_list$p3), nrow = 3))
 dev.off()
-pdf("fig/CCES/rf/CCES_varimp_ts_set3_pid.pdf", width = 6, height = 4)
-print(vi_bottom(pdf_default(p_list$p4)))
+pdf("fig/CCES/rf/CCES_varimp_ts_set3_pid.pdf", width = 4, height = 3.8)
+print(vi_bottom(pdf_default(p_list$p4), nrow = 3))
 dev.off()
-pdf("fig/CCES/rf/CCES_varimp_ts_set4_pid.pdf", width = 6, height = 4)
-print(vi_bottom(pdf_default(p_list$p5)))
+pdf("fig/CCES/rf/CCES_varimp_ts_set4_pid.pdf", width = 4, height = 3.8)
+print(vi_bottom(pdf_default(p_list$p5), nrow = 3))
 dev.off()
