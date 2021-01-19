@@ -283,15 +283,29 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
     Year = yr,
     AUC = perf %>% map(dv) %>% map(method) %>% map(set) %>%
       map(~ .x$auc) %>% unlist(),
+    AUC_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+      map(~ .x$ci.auc.bootstrap) %>% map(1) %>% unlist(),
+    ## map(2) ---> AUC
+    AUC_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+      map(~ .x$ci.auc.bootstrap) %>% map(3) %>% unlist(),
     Accuracy = perf %>% map(dv) %>% map(method) %>% map(set) %>%
-      map(~ .x$cf.matrix$overall[[1]]) %>%
+      map(~ .x$cf.matrix$overall[["Accuracy"]]) %>%
+      unlist(),
+    Accuracy_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+      map(~ .x$cf.matrix$overall[["AccuracyLower"]]) %>%
+      unlist(),
+    Accuracy_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+      map(~ .x$cf.matrix$overall[["AccuracyUpper"]]) %>%
       unlist(),
     CI = perf %>% map(dv) %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall) %>%
       map(
         ~ paste0(
-          "[",  str_pad(round(.x[[3]], digits = 4), 6, "right", "0"),
-          ", ", str_pad(round(.x[[4]], digits = 4), 6, "right", "0"), "]"
+          "[",  
+          str_pad(round(.x[["AccuracyLower"]], digits = 4), 6, "right", "0"),
+          ", ", 
+          str_pad(round(.x[["AccuracyUpper"]], digits = 4), 6, "right", "0"), 
+          "]"
         )
       ) %>%
       unlist(),

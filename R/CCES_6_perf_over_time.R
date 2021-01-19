@@ -13,6 +13,23 @@ summ_df <- seq(4) %>%
   bind_rows(.id = "Set")
 
 # Append NS outputs (pres vote choice, 2020) per Jan's code source outputs =====
+set.seed(123)
+NS_auc_range <- seq(4) %>%
+  map(
+    ~ predict(
+      eval(parse(text = paste0("NS", .x)))$finalModel, 
+      data = Xm_testSet_adjusted
+    ) %>%
+      .[["predictions"]] %>%
+      .[, "Biden"]
+  ) %>%
+  map(
+    ~ ci.auc(
+      as.numeric(Xm_testSet_adjusted$trump2Pvote_intent) - 1, .x,
+      method = "bootstrap"
+    )
+  )
+
 summ_df <- summ_df %>%
   bind_rows(
     .,
@@ -20,7 +37,11 @@ summ_df <- summ_df %>%
       Set = as.character(seq(4)),
       Year = 2020,
       AUC = AUC_Nationscape,
+      AUC_lower = NS_auc_range %>% map(1) %>% unlist(),
+      AUC_upper = NS_auc_range %>% map(3) %>% unlist(),
       Accuracy = Accuracy_Nationscape,
+      Accuracy_lower = AN$Lower,
+      Accuracy_upper = AN$Upper,
       CI = map2(
         AN$Lower, AN$Upper,
         ~ paste0(
@@ -46,60 +67,3 @@ summ_df <- summ_df %>%
   arrange(desc(Year), Set)
 
 save(summ_df, file = "data/cces-tidy/perf_summ_CCES_Nationscape.Rda")
-
-# Export figures ===============================================================
-pdf("fig/CCES/rf/CCES_NS_accuracy_overtime.pdf", width = 6, height = 4)
-print(
-  pdf_default(po_plot(summ_df, metric = "Accuracy")) +
-    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-    scale_y_continuous(limits = c(0.5, 1.0))
-)
-dev.off()
-
-pdf("fig/CCES/rf/CCES_NS_auc_overtime.pdf", width = 6, height = 4)
-print(
-  pdf_default(po_plot(summ_df, metric = "AUC")) +
-    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-    scale_y_continuous(limits = c(0.5, 1.0))
-)
-dev.off()
-
-pdf("fig/CCES/rf/CCES_NS_prec_overtime.pdf", width = 6, height = 4)
-print(
-  pdf_default(po_plot(summ_df, metric = "Precision")) +
-    theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
-)
-dev.off()
-
-pdf("fig/CCES/rf/CCES_NS_recall_overtime.pdf", width = 6, height = 4)
-pdf_default(po_plot(summ_df, metric = "Recall")) +
-  theme(legend.position = "bottom", legend.key.width = unit(1, "cm"))
-dev.off()
-
-pdf("fig/CCES/rf/CCES_NS_F1_overtime.pdf", width = 6, height = 4)
-print(
-  pdf_default(po_plot(summ_df, metric = "F1")) +
-    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-    scale_y_continuous(limits = c(0.5, 1.0))
-)
-dev.off()
-
-## Demographics Accuracy Range
-p <- summ_df %>%
-  filter(Set == "Demographics Only") %>%
-  select(Year, CI, Accuracy) %>%
-  rowwise() %>%
-  mutate(
-    lower = str_match_all(CI, "\\[(.*?),")[[1]][, 2],
-    upper = str_match_all(CI, " (.*?)\\]")[[1]][, 2]
-  ) %>%
-  select(-CI) %>%
-  mutate_if(is.character, as.numeric) %>%
-  ggplot(aes(x = Year, y = Accuracy)) +
-  geom_pointrange(aes(ymin = lower, ymax = upper)) +
-  scale_x_continuous(breaks = seq(2008, 2020, by = 2)) +
-  scale_y_continuous(limits = c(0.6, 0.7))
-
-pdf("fig/CCES/rf/CCES_NS_demo_acc_range_overtime.pdf", width = 6, height = 4)
-print(pdf_default(p))
-dev.off()
