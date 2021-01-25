@@ -55,8 +55,9 @@ source("R/NS_2_prep_ML.R")
 
 Xm_testSet_full <- Xm[-D_trainsetIndex_20percent, ]
 
-# We don't want a massive test set, but the necessity of this line
-# hinges on what exactly we put into NS_2_prep_ML.R:
+# We want a suitably-size test set
+# [we verified that this always produces the same test set,
+# as long as NS_2_prep_ML.R and set.seed() therein are executed]
 Xm_testSet_adjusted <- Xm_testSet_full %>%
   slice_sample(n = length(D_trainsetIndex_20percent) * .2)
 
@@ -149,11 +150,11 @@ AN <- tibble(
   Upper = c(S1$overall[4], S2$overall[4], S3$overall[4], S4$overall[4])
 )
 
-AN %>%
-  ggplot(aes(x = fct_reorder(what, orderTib), y = Accuracy)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = Lower, ymax = Upper, width = .04)) +
-  labs(x = "", subtitle = "2020 vote in intent (Nationscape)") +
-  theme_minimal()
-pdf("fig/nationscape/Accuracy_2019_to2020.pdf", width = 6, height = 3)
-dev.off()
+# AN %>%
+#   ggplot(aes(x = fct_reorder(what, orderTib), y = Accuracy)) +
+#   geom_point() +
+#   geom_errorbar(aes(ymin = Lower, ymax = Upper, width = .04)) +
+#   labs(x = "", subtitle = "2020 vote in intent (Nationscape)") +
+#   theme_minimal()
+# pdf("fig/nationscape/Accuracy_2019_to2020.pdf", width = 6, height = 3)
+# dev.off()
