@@ -114,3 +114,20 @@ levels(perf$Set) %>%
       dev.off()
     }
   )
+
+# If put into simple linear regression =========================================
+temp <- perf %>% 
+  filter(Survey == "ANES") %>%
+  lm(Accuracy ~ Year, data = .) %>% 
+  broom::tidy()
+
+temp %>% 
+  filter(term == "Year") %>%
+  .$estimate %>%
+  write(., file = "tab/anes_ts_slope_est.tex")
+
+temp %>% 
+  filter(term == "Year") %>%
+  .$std.error %>%
+  write(., file = "tab/anes_ts_slope_se.tex")
+
