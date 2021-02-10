@@ -57,7 +57,7 @@ levels(perf$Set) %>%
   imap(
     ~ {
       pdf(
-        paste0("fig/survey_rf_accrange_ts_", .y, ".pdf"),
+        here(paste0("fig/survey_rf_accrange_ts_", .y, ".pdf")),
         width = 7, height = 4
       )
       print(pdf_default(.x))
@@ -81,7 +81,7 @@ levels(perf$Set) %>%
   imap(
     ~ {
       pdf(
-        paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf"),
+        here(paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf")),
         width = 7, height = 4
       )
       print(pdf_default(.x))
