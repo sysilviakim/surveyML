@@ -1,4 +1,4 @@
-source(here("R", "CCES_1_data.R"))
+source(here::here("R", "CCES_1_data.R"))
 
 ## In presidential election years, delete preference/early vote covariates
 ## In midterm years, use last presidential vote result as outcome variable

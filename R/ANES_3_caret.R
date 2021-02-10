@@ -1,12 +1,12 @@
-source(here("R", "utilities.R"))
+source(here::here("R", "utilities.R"))
 
 load(here("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 load(here("data", "anes-tidy", "anes-vl.RData"))
 
-if (!dir.exists("output/ANES/logit")) {
-  dir.create("output/ANES/logit", recursive = TRUE)
-  dir.create("output/ANES/cart", recursive = TRUE)
-  dir.create("output/ANES/rf", recursive = TRUE)
+if (!dir.exists(here("output/ANES/logit"))) {
+  dir.create(here("output/ANES/logit"), recursive = TRUE)
+  dir.create(here("output/ANES/cart"), recursive = TRUE)
+  dir.create(here("output/ANES/rf"), recursive = TRUE)
 }
 
 sfx <- "prezvote"

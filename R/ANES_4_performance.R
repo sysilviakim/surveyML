@@ -1,4 +1,4 @@
-source(here("R", "utilities.R"))
+source(here::here("R", "utilities.R"))
 load(here("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 
 ## Extract performance measures ================================================
@@ -18,7 +18,7 @@ for (yr in as.character(seq(1952, 2016, by = 4))) {
     for (varset in seq(4)) {
       ## Load previously run results
       load(
-        file.path(
+        here(
           "output", "ANES", method, 
           paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
         )
@@ -36,7 +36,7 @@ for (yr in as.character(seq(1952, 2016, by = 4))) {
       ## Plot variable importance
       pdf_varimp(
         eval(parse(text = paste0("turn.", method))),
-        file.path(
+        here(
           "fig", "ANES", method,
           paste0("var", method, "_", yr, "_", sfx, "_st", varset, ".pdf")
         ),

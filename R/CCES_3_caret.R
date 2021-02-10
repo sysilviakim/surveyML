@@ -1,9 +1,9 @@
-source(here("R", "utilities.R"))
+source(here::here("R", "utilities.R"))
 
-if (!dir.exists("output/CCES/logit")) {
-  dir.create("output/CCES/logit", recursive = TRUE)
-  dir.create("output/CCES/cart", recursive = TRUE)
-  dir.create("output/CCES/rf", recursive = TRUE)
+if (!dir.exists(here("output/CCES/logit"))) {
+  dir.create(here("output/CCES/logit"), recursive = TRUE)
+  dir.create(here("output/CCES/cart"), recursive = TRUE)
+  dir.create(here("output/CCES/rf"), recursive = TRUE)
 }
 
 ## loop to enable gc()
@@ -48,9 +48,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
 	      vl$set3 <- c("v3010", "v3019", paste0("v", seq(3021, 3035)))
 	    }
       ## set4 is full set
-      load(file.path(
-        "data", "cces-tidy", paste0("data_", yr, "_", sfx, ".RData")
-      ))
+      load(here("data", "cces-tidy", paste0("data_", yr, "_", sfx, ".RData")))
       if (varset < 4) {
         temp$train <- temp$train %>% 
           select(
