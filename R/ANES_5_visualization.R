@@ -1,6 +1,7 @@
-source("R/utilities.R")
-load("output/ANES/ANES_perf.RData")
-load("output/ANES/ANES_varimp.RData")
+source(here("R", "utilities.R"))
+
+load(here("output/ANES/ANES_perf.RData"))
+load(here("output/ANES/ANES_varimp.RData"))
 
 # vote choice varimp intersection: tables ======================================
 
@@ -11,7 +12,7 @@ tab <- vi_inter_btw(
   xtable(label = "tab:ANES_vi_btw_sets_demo_1", caption = NULL)
 print(
   tab,
-  file = "tab/ANES_rf_vi_btw_sets_demo_1.tex", floating = FALSE,
+  file = here("tab/ANES_rf_vi_btw_sets_demo_1.tex"), floating = FALSE,
   digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
@@ -22,7 +23,7 @@ tab <- vi_inter_btw(
   xtable(label = "tab:ANES_vi_btw_sets_demo_2", caption = NULL)
 print(
   tab,
-  file = "tab/ANES_rf_vi_btw_sets_demo_2.tex", floating = FALSE,
+  file = here("tab/ANES_rf_vi_btw_sets_demo_2.tex"), floating = FALSE,
   digits = 0, include.rownames = FALSE, booktabs = TRUE
 )
 
@@ -51,19 +52,19 @@ p_list <- list(
   )
 
 # Export =======================================================================
-pdf("fig/ANES/rf/ANES_varimp_ts_set2_demo.pdf", width = 4, height = 3.8)
+pdf(here("fig/ANES/rf/ANES_varimp_ts_set2_demo.pdf"), width = 4, height = 3.8)
 print(vi_bottom(pdf_default(p_list$p1), nrow = 3))
 dev.off()
-pdf("fig/ANES/rf/ANES_varimp_ts_set2_edu.pdf", width = 4, height = 3.8)
+pdf(here("fig/ANES/rf/ANES_varimp_ts_set2_edu.pdf"), width = 4, height = 3.8)
 print(vi_bottom(pdf_default(p_list$p2), nrow = 3))
 dev.off()
 
-pdf("fig/ANES/rf/ANES_varimp_ts_set2_pid.pdf", width = 4, height = 3.8)
+pdf(here("fig/ANES/rf/ANES_varimp_ts_set2_pid.pdf"), width = 4, height = 3.8)
 print(vi_bottom(pdf_default(p_list$p3), nrow = 3))
 dev.off()
-pdf("fig/ANES/rf/ANES_varimp_ts_set3_pid.pdf", width = 4, height = 3.8)
+pdf(here("fig/ANES/rf/ANES_varimp_ts_set3_pid.pdf"), width = 4, height = 3.8)
 print(vi_bottom(pdf_default(p_list$p4), nrow = 3))
 dev.off()
-pdf("fig/ANES/rf/ANES_varimp_ts_set4_pid.pdf", width = 4, height = 3.8)
+pdf(here("fig/ANES/rf/ANES_varimp_ts_set4_pid.pdf"), width = 4, height = 3.8)
 print(vi_bottom(pdf_default(p_list$p5), nrow = 3))
 dev.off()

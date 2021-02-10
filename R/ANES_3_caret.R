@@ -1,6 +1,7 @@
-source("R/utilities.R")
-load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
-load(file.path("data", "anes-tidy", "anes-vl.RData"))
+source(here("R", "utilities.R"))
+
+load(here("data", "anes-tidy", "anes_prezvote_onehot.RData"))
+load(here("data", "anes-tidy", "anes-vl.RData"))
 
 if (!dir.exists("output/ANES/logit")) {
   dir.create("output/ANES/logit", recursive = TRUE)

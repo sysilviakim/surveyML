@@ -1,5 +1,5 @@
-source("R/utilities.R")
-load(file.path("data", "anes-tidy", "anes_prezvote_onehot.RData"))
+source(here("R", "utilities.R"))
+load(here("data", "anes-tidy", "anes_prezvote_onehot.RData"))
 
 ## Extract performance measures ================================================
 ## loop to enable gc()
@@ -89,7 +89,7 @@ tab <- seq(4) %>%
 
 print(
   tab, include.rownames = FALSE,
-  file = "tab/ANES_prezchoice_rf.tex",
+  file = here("tab/ANES_prezchoice_rf.tex"),
   booktabs = TRUE
 )
 

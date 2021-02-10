@@ -1,5 +1,5 @@
 # Validating Files =============================================================
-source("R/utilities.R")
+source(here("R", "utilities.R"))
 
 ## Data was downloaded as-is from https://cces.gov.harvard.edu/
 ## Except for CCES 2017 Data/Guide, which had to be renamed to prevent overwrite
@@ -39,19 +39,19 @@ df_ls <- seq(nrow(file_ls)) %>%
     ~ {
       if (file_ls$file_format[.x] == ".tab") {
         read.table(
-          file.path("data/cces", file_ls$file_name[.x]), header = TRUE, 
+          here("data/cces", file_ls$file_name[.x]), header = TRUE, 
           fill = TRUE, quote = "", sep = "\t", stringsAsFactors = FALSE
           ## In hindsight, would have better specified colClasses
         )
       } else if (file_ls$file_format[.x] == ".rdata") {
-        loadRData(file.path("data/cces", file_ls$file_name[.x]))
+        loadRData(here("data/cces", file_ls$file_name[.x]))
       } else if (file_ls$file_format[.x] == ".dta") {
-        ## read.dta(file.path("data/cces", file_ls$file_name[.x]))
+        ## read.dta(here("data/cces", file_ls$file_name[.x]))
         ## Changing things to make things easier
-        read_dta(file.path("data/cces", file_ls$file_name[.x])) %>%
+        read_dta(here("data/cces", file_ls$file_name[.x])) %>%
           zap_labels()
       } else {
-        read_spss(file.path("data/cces", file_ls$file_name[.x]))
+        read_spss(here("data/cces", file_ls$file_name[.x]))
       }
     }
   )

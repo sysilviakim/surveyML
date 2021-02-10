@@ -1,4 +1,4 @@
-source("R/ANES_1_data.R")
+source(here("R", "ANES_1_data.R"))
 
 # Cumulative dataset split by year =============================================
 anes_list <- anes %>%
@@ -47,8 +47,8 @@ anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
 ## Validate: anes_onehot %>% map("train") %>% map(names) %>% map(1) %>% unlist()
 ## anes_onehot %>% map("train") %>% map(nrow) %>% unlist()
 ## anes_onehot %>% map("train") %>% map(ncol) %>% unlist()
-save(anes, file = file.path("data", "anes-tidy", "anes_prezvote_full.RData"))
+save(anes, file = here("data", "anes-tidy", "anes_prezvote_full.RData"))
 save(
   anes_onehot, 
-  file = file.path("data", "anes-tidy", "anes_prezvote_onehot.RData")
+  file = here("data", "anes-tidy", "anes_prezvote_onehot.RData")
 )

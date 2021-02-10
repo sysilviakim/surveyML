@@ -1,7 +1,7 @@
-source("R/utilities.R")
-source("R/NS_extract_performance.R")
-load("output/CCES/CCES_perf.RData")
-load("output/CCES/CCES_varimp.RData")
+source(here("R", "utilities.R"))
+source(here("R", "NS_extract_performance.R"))
+load(here("output/CCES/CCES_perf.RData"))
+load(here("output/CCES/CCES_varimp.RData"))
 
 # CCES performance into a table (pres vote choice, 2008-2018) ==================
 summ_df <- seq(4) %>%
@@ -66,4 +66,4 @@ summ_df <- summ_df %>%
   mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
   arrange(desc(Year), Set)
 
-save(summ_df, file = "data/cces-tidy/perf_summ_CCES_Nationscape.Rda")
+save(summ_df, file = here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda"))

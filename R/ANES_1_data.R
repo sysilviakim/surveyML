@@ -1,8 +1,8 @@
-source("R/utilities.R")
+source(here("R", "utilities.R"))
 
 # Import/export data ===========================================================
 ## 59,944 rows, 1,029(!) variables
-anes <- read_dta("data/anes/anes_timeseries_cdf.dta")
+anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta"))
 
 anes_labels <- anes %>% 
   map(~ attr(.x, "label")) %>%
@@ -75,4 +75,4 @@ vl <- list(
   ##   which(anes_labels$var == "VCF9013"):which(anes_labels$var == "VCF9020")
   ## )
 )
-save(vl, file = file.path("data", "anes-tidy", "anes-vl.RData"))
+save(vl, file = here("data", "anes-tidy", "anes-vl.RData"))

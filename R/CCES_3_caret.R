@@ -1,4 +1,4 @@
-source("R/utilities.R")
+source(here("R", "utilities.R"))
 
 if (!dir.exists("output/CCES/logit")) {
   dir.create("output/CCES/logit", recursive = TRUE)

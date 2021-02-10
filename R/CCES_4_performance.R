@@ -1,4 +1,4 @@
-source("R/utilities.R")
+source(here("R", "utilities.R"))
 
 ## Extract performance measures ================================================
 ## loop to enable gc()
@@ -9,7 +9,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
   for (i in seq(length(file_suffix[[paste0("year", yr)]]))) {
     sfx <- file_suffix[[paste0("year", yr)]][i]
     load(
-      file.path("data", "cces-tidy", paste0("data_", yr, "_", sfx, ".RData"))
+      here("data", "cces-tidy", paste0("data_", yr, "_", sfx, ".RData"))
     )
 
     ## caret results
@@ -18,7 +18,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
         
         ## Load previously run results
         load(
-          file.path(
+          here(
             "output", "CCES", method, 
             paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
           )
@@ -36,7 +36,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
         ## Plot variable importance
         pdf_varimp(
           eval(parse(text = paste0("turn.", method))),
-          file.path(
+          here(
             "fig", "CCES", method,
             paste0("var", method, "_", yr, "_", sfx, "_st", varset, ".pdf")
           ),
@@ -51,16 +51,16 @@ for (yr in rev(seq(2006, 2018, 2))) {
         ## Save memory
         rm(list = paste0("turn.", method))
         gc(reset = TRUE)
-        save(perf, file = "output/CCES/CCES_perf.RData")
-        save(vid,  file = "output/CCES/CCES_varimp.RData")
+        save(perf, file = here("output/CCES/CCES_perf.RData"))
+        save(vid,  file = here("output/CCES/CCES_varimp.RData"))
       }
     }
   }
 }
 
 ## Pres Vote Choice, Random Forest =============================================
-load("output/CCES/CCES_perf.RData")
-load("output/CCES/CCES_varimp.RData")
+load(here("output/CCES/CCES_perf.RData"))
+load(here("output/CCES/CCES_varimp.RData"))
 
 tab <- seq(4) %>%
   map(
@@ -85,7 +85,7 @@ tab <- seq(4) %>%
 
 print(
   tab, include.rownames = FALSE,
-  file = "tab/CCES_preschoice_rf.tex",
+  file = here("tab/CCES_preschoice_rf.tex"),
   booktabs = TRUE
 )
 
@@ -105,7 +105,7 @@ tab <- seq(4) %>%
 
 print(
   tab, include.rownames = FALSE,
-  file = "tab/CCES_presapprov_rf.tex"
+  file = here("tab/CCES_presapprov_rf.tex")
 )
 
 ## House Vote Choice, Random Forest ============================================
@@ -124,7 +124,7 @@ tab <- seq(4) %>%
 
 print(
   tab, include.rownames = FALSE,
-  file = "tab/CCES_house_rf.tex"
+  file = here("tab/CCES_house_rf.tex")
 )
 
 ## Senate Vote Choice, Random Forest ===========================================
@@ -143,5 +143,5 @@ tab <- seq(4) %>%
 
 print(
   tab, include.rownames = FALSE,
-  file = "tab/CCES_senate_rf.tex"
+  file = here("tab/CCES_senate_rf.tex")
 )

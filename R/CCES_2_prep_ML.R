@@ -1,4 +1,5 @@
-source("R/CCES_1_data.R")
+source(here("R", "CCES_1_data.R"))
+
 ## In presidential election years, delete preference/early vote covariates
 ## In midterm years, use last presidential vote result as outcome variable
 
@@ -24,7 +25,7 @@ df_ls <- df_ls %>%
 ## pid3 named differently in early years
 df_ls$yr_2008 <- df_ls$yr_2008 %>% select(-CC307)
 df_ls$yr_2010 <- df_ls$yr_2010 %>% select(-CC412a)
-save(df_ls, file = file.path("data", "cces-tidy", "cces_df_ls.RData"))
+save(df_ls, file = here("data", "cces-tidy", "cces_df_ls.RData"))
 
 # Substitute continuous variables' NA values with 0 or 50 when relevant ========
 ## Other missing dbl rows will be deleted
@@ -117,15 +118,6 @@ var_db <- list(
   )
 )
 
-# seq(08, 18, 02) %>%
-#   map(~ str_pad(.x, width = 2, side = "left", pad = "0")) %>%
-#   map(
-#     ~ nrow(
-#       df_ls[[paste0("yr_20", .x)]] %>% 
-#         filter_at(var_db[[paste0("yr", .x)]], all_vars(!is.na(.)))
-#     ) / nrow(df_ls[[paste0("yr_20", .x)]])
-#   )
-
 # Year 2018 ====================================================================
 temp <- data_routine(
   df = df_ls$yr_2018 %>%
@@ -135,7 +127,7 @@ temp <- data_routine(
   dep = "CC18_317", lvl = c(1, 2), lbl = c("trump", "clinton"), 
   dbl = var_db$yr18
 )
-save(temp, file = "data/cces-tidy/data_2018_2016vote.RData")
+save(temp, file = here("data/cces-tidy/data_2018_2016vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2018 %>%
     ## Post-wave Trump job approval ratings CC18_app_dtrmp_post
@@ -147,13 +139,15 @@ temp <- data_routine(
   dep = "approv", lvl = c(0, 1), lbl = c("dis", "approve"),
   dbl = var_db$yr18
 )
-save(temp, file = "data/cces-tidy/data_2018_trumpapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2018_trumpapproval.RData"))
+
 ## Contextual variables consist of the names and parties of the candidates
 ## for U.S. House, U.S. Senate, and Governor. For all offices,
 ## Candidate 1 is the Democrat and Candidate 2 is the Republican,
 ## except when no Democrat is running. When no Democrat is running, the
 ## Republican is listed as Candidate 1. When only one candidate is running,
 ## Candidate 2 is listed as "NA".
+
 temp <- data_routine(
   df = df_ls$yr_2018 %>%
     select(-CC18_353, -CC18_353a, -CC18_353x) %>%
@@ -180,7 +174,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr18
 )
-save(temp, file = "data/cces-tidy/data_2018_house.RData")
+save(temp, file = here("data/cces-tidy/data_2018_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2018 %>%
     ## In the race for U.S. Senator in your state, who do you prefer? etc etc
@@ -200,7 +194,7 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr18
 )
-save(temp, file = "data/cces-tidy/data_2018_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2018_senate.RData"))
 
 # Year 2016 ====================================================================
 temp <- data_routine(
@@ -216,7 +210,7 @@ temp <- data_routine(
   dep = "CC16_410a", lvl = c(1, 2), lbl = c("trump", "clinton"), 
   dbl = var_db$yr16
 )
-save(temp, file = "data/cces-tidy/data_2016_2016vote.RData")
+save(temp, file = here("data/cces-tidy/data_2016_2016vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2016 %>%
     ## Same as above + presidential vote choice
@@ -227,7 +221,7 @@ temp <- data_routine(
   dep = "approv", lvl = c(0, 1), lbl = c("dis", "approve"),
   dbl = var_db$yr16
 )
-save(temp, file = "data/cces-tidy/data_2016_obamaapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2016_obamaapproval.RData"))
 ## In 2016, CC16_412 and CC16_410b are not listed explicitly, so guesswork
 temp <- data_routine(
   df = df_ls$yr_2016 %>%
@@ -262,7 +256,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr16
 )
-save(temp, file = "data/cces-tidy/data_2016_house.RData")
+save(temp, file = here("data/cces-tidy/data_2016_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2016 %>%
     select(-CC16_365, -CC16_365a, -CC16_365x) %>%
@@ -280,7 +274,7 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr16
 )
-save(temp, file = "data/cces-tidy/data_2016_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2016_senate.RData"))
 
 # Year 2014 ====================================================================
 temp <- data_routine(
@@ -291,7 +285,7 @@ temp <- data_routine(
   dep = "CC14_317", lvl = c(2, 1), lbl = c("romney", "obama"), 
   dbl = var_db$yr14
 )
-save(temp, file = "data/cces-tidy/data_2014_2012vote.RData")
+save(temp, file = here("data/cces-tidy/data_2014_2012vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2014 %>%
     ## Leave out 2012 vote choice
@@ -302,7 +296,7 @@ temp <- data_routine(
   dep = "approv", lvl = c(0, 1), lbl = c("dis", "approve"), 
   dbl = var_db$yr14
 )
-save(temp, file = "data/cces-tidy/data_2014_obamaapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2014_obamaapproval.RData"))
 temp <- data_routine(
   df = df_ls$yr_2014 %>%
     select(-CC360, -CC360x) %>%
@@ -320,7 +314,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"),
   dbl = var_db$yr14
 )
-save(temp, file = "data/cces-tidy/data_2014_house.RData")
+save(temp, file = here("data/cces-tidy/data_2014_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2014 %>%
     select(-CC355, -CC355x) %>%
@@ -338,7 +332,7 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr14
 )
-save(temp, file = "data/cces-tidy/data_2014_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2014_senate.RData"))
 
 # Year 2012 ====================================================================
 temp <- data_routine(
@@ -354,7 +348,7 @@ temp <- data_routine(
   dep = "CC410a", lvl = c(2, 1), lbl = c("mccain", "obama"), 
   dbl = var_db$yr12
 )
-save(temp, file = "data/cces-tidy/data_2012_2012vote.RData")
+save(temp, file = here("data/cces-tidy/data_2012_2012vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2012 %>%
     ## Early Vote 2012                             CC354b
@@ -370,7 +364,7 @@ temp <- data_routine(
   dep = "approv", lvl = c(0, 1), lbl = c("dis", "approve"), 
   dbl = var_db$yr12
 )
-save(temp, file = "data/cces-tidy/data_2012_obamaapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2012_obamaapproval.RData"))
 temp <- data_routine(
   df = df_ls$yr_2012 %>%
     select(-CC390, -CC390b) %>%
@@ -388,7 +382,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr12
 )
-save(temp, file = "data/cces-tidy/data_2012_house.RData")
+save(temp, file = here("data/cces-tidy/data_2012_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2012 %>%
     select(-CC355, -CC355b) %>%
@@ -406,7 +400,7 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr12
 )
-save(temp, file = "data/cces-tidy/data_2012_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2012_senate.RData"))
 
 # Year 2010 ====================================================================
 temp <- data_routine(
@@ -414,7 +408,7 @@ temp <- data_routine(
   lvl = c(2, 1), lbl = c("mccain", "obama"),
   dbl = var_db$yr10
 )
-save(temp, file = "data/cces-tidy/data_2010_2008vote.RData")
+save(temp, file = here("data/cces-tidy/data_2010_2008vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2010 %>%
     ## Vote choice 2010 CC317
@@ -427,7 +421,7 @@ temp <- data_routine(
   dbl = var_db$yr10
 )
 temp <- train_name_clean(temp)
-save(temp, file = "data/cces-tidy/data_2010_obamaapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2010_obamaapproval.RData"))
 temp <- data_routine(
   df = df_ls$yr_2010 %>%
     select(-CC390, -CC390a) %>%
@@ -437,7 +431,7 @@ temp <- data_routine(
   dbl = var_db$yr10
 )
 temp <- train_name_clean(temp)
-save(temp, file = "data/cces-tidy/data_2010_house.RData")
+save(temp, file = here("data/cces-tidy/data_2010_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2010 %>%
     select(-CC355, -CC355a, -CC355b) %>%
@@ -447,7 +441,7 @@ temp <- data_routine(
   dbl = var_db$yr10
 )
 temp <- train_name_clean(temp)
-save(temp, file = "data/cces-tidy/data_2010_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2010_senate.RData"))
 
 # Year 2008 ====================================================================
 temp <- data_routine(
@@ -465,7 +459,7 @@ temp <- data_routine(
   dep = "CC410", lvl = c(2, 1), lbl = c("mccain", "obama"), 
   dbl = var_db$yr08
 )
-save(temp, file = "data/cces-tidy/data_2008_2008vote.RData")
+save(temp, file = here("data/cces-tidy/data_2008_2008vote.RData"))
 temp <- data_routine(
   df = df_ls$yr_2008 %>%
     ## Early vote                                  CC326b
@@ -483,7 +477,7 @@ temp <- data_routine(
   dep = "approv", lvl = c(0, 1), lbl = c("dis", "approve"),
   dbl = var_db$yr08
 )
-save(temp, file = "data/cces-tidy/data_2008_bushapproval.RData")
+save(temp, file = here("data/cces-tidy/data_2008_bushapproval.RData"))
 temp <- data_routine(
   df = df_ls$yr_2008 %>%
     select(-CC339, -CC340) %>%
@@ -493,7 +487,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr08
 )
-save(temp, file = "data/cces-tidy/data_2008_house.RData")
+save(temp, file = here("data/cces-tidy/data_2008_house.RData"))
 temp <- data_routine(
   df = df_ls$yr_2008 %>%
     select(-CC335, -CC335S2, -CC337, -CC337S2) %>%
@@ -503,7 +497,7 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"),
   dbl = var_db$yr08
 )
-save(temp, file = "data/cces-tidy/data_2008_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2008_senate.RData"))
 
 # Year 2006 ====================================================================
 df <- df_ls$yr_2006 %>%
@@ -536,7 +530,7 @@ temp <- data_routine(
   dep = "house_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr06
 )
-save(temp, file = "data/cces-tidy/data_2006_house.RData")
+save(temp, file = here("data/cces-tidy/data_2006_house.RData"))
 temp <- data_routine(
   df = df %>%
     select(-v3056) %>%
@@ -546,4 +540,4 @@ temp <- data_routine(
   dep = "senate_vote", lvl = c(0, 1), lbl = c("rep", "dem"), 
   dbl = var_db$yr06
 )
-save(temp, file = "data/cces-tidy/data_2006_senate.RData")
+save(temp, file = here("data/cces-tidy/data_2006_senate.RData"))
