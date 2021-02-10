@@ -27,7 +27,7 @@ library(xtable)
 
 ## Functions ===================================================================
 file_path_fxn <- function(data = "CCES") {
-  file.path(
+  here(
     "output", data,
     method, paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
   )
