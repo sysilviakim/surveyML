@@ -4,6 +4,10 @@ load(here("output/ANES/ANES_perf.RData"))
 load(here("output/ANES/ANES_varimp.RData"))
 
 # vote choice varimp intersection: tables ======================================
+vi_inter_btw(
+  vid, y = 1, from = 1, to = 4, top = 10, 
+  pid_vec = "vcf0301", educ_vec = "vcf0110", survey = "ANES"
+) 
 
 tab <- vi_inter_btw(
   vid, y = 1, from = 1, to = 2, top = 10, 
