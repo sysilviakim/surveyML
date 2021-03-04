@@ -46,10 +46,16 @@
     },
     "Kmisc": {
       "Package": "Kmisc",
-      "Version": "0.1.0",
-      "Source": "unknown",
+      "Version": "0.2.0",
+      "Source": "GitHub",
       "Remotes": "ropensci/genderdata",
-      "Hash": "c9aa08989768ef2a03a9ca4428184063"
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "Kmisc",
+      "RemoteUsername": "sysilviakim",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "9ad33e30eba73ff70efac1d48163b2871ba12010",
+      "Hash": "240122b0c41eef5e50e2935b459b5145"
     },
     "MASS": {
       "Package": "MASS",
@@ -872,10 +878,10 @@
     },
     "rlang": {
       "Package": "rlang",
-      "Version": "0.4.7",
+      "Version": "0.4.10",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "c06d2a6887f4b414f8e927afd9ee976a"
+      "Hash": "599df23c40a4fce9c7b4764f28c37857"
     },
     "rmarkdown": {
       "Package": "rmarkdown",
