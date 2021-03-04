@@ -765,7 +765,7 @@ vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
 
 roc_comparison <- function(perf, yvar = "prezvote", set = 4,
                            levels = c("logit", "cart", "rf"),
-                           labels,
+                           labels = c("Logit", "CART", "RF"),
                            linetype = c("dotdash", "dashed", "solid"),
                            size = 0.7,
                            position = c(0.8, 0.2)) {
@@ -781,7 +781,8 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
           .id = "year"
         ) %>%
         mutate(yvar = yvar)
-    )
+    ) %>%
+    mutate(method = factor(method, levels = levels, labels = labels))
   
   p <- unique(temp$year) %>%
     set_names(., .) %>%
@@ -795,7 +796,8 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
         scale_linetype_manual(values = linetype) +
         xlab("False Positive Rate") +
         ylab("True Positive Rate") +
-        theme(legend.position = position)
+        theme(legend.position = position) + 
+        labs(colour = "Method", linetype = "Method")
     )
   return(p)
 }
