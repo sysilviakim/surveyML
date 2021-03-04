@@ -763,6 +763,43 @@ vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
     vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
+roc_comparison <- function(perf, yvar = "prezvote", set = 4,
+                           levels = c("logit", "cart", "rf"),
+                           labels,
+                           linetype = c("dotdash", "dashed", "solid"),
+                           size = 0.7,
+                           position = c(0.8, 0.2)) {
+  temp <- levels %>%
+    map_dfr(
+      function(x, y) perf %>%
+        imap(yvar) %>%
+        imap(x) %>%
+        imap(set) %>%
+        imap(~ .x$perf) %>%
+        imap_dfr(
+          ~ tibble(method = x, x = .x@x.values[[1]], y = .x@y.values[[1]]),
+          .id = "year"
+        ) %>%
+        mutate(yvar = yvar)
+    )
+  
+  p <- unique(temp$year) %>%
+    set_names(., .) %>%
+    imap(
+      ~ ggplot(
+          temp %>% filter(year == .x),
+          aes(x = x, y = y, colour = method, linetype = method)
+        ) +
+        geom_line(size = size) + 
+        scale_color_viridis_d(direction = -1, end = 0.9) +
+        scale_linetype_manual(values = linetype) +
+        xlab("False Positive Rate") +
+        ylab("True Positive Rate") +
+        theme(legend.position = position)
+    )
+  return(p)
+}
+
 ## Extra Setup =================================================================
 options(
   mc.cores = parallel::detectCores(),
