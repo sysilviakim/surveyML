@@ -25,19 +25,18 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   )
 
 # SI figures ===================================================================
-p <- seq(4) %>%
-  set_names(., paste0("p", .)) %>%
-  map(~ roc_comparison(perf, set = .x))
-
-seq(4) %>%
+cross2(c("prezvote", "house", "senate"), seq(4)) %>%
+  map(setNames, c("yvar", "set")) %>%
   map(
     function(x) {
       pdf(
-        here("fig", "ANES", paste0("ANES_perf_prezvote_set", x, ".pdf")),
+        here(
+          "fig", "ANES", paste0("ANES_perf_", x$yvar, "_set", x$set, ".pdf")
+        ),
         width = 6, height = 5
       )
       grid_arrange_shared_legend(
-        list = p[[paste0("p", x)]] %>%
+        list = roc_comparison(perf, yvar = x$yvar, set = x$set) %>%
           imap(
             ~ pdf_default(.x + ggtitle(gsub("year", "", .y))) + 
               theme(

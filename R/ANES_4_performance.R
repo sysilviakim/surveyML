@@ -93,7 +93,8 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
             ifelse(
               .x[[1]] == "prezvote", "Presidential Vote Choice, ",
               ifelse(
-                .x[[1]] == "house", "House Vote Choice", "Senate Vote Choice, "
+                .x[[1]] == "house", "House Vote Choice, ",
+                "Senate Vote Choice, "
               )
             ),
             ifelse(
