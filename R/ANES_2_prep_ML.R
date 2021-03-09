@@ -19,6 +19,18 @@ anes_list <- anes %>%
 
 # Presidential vote: one-hot encoding ==========================================
 anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
+  imap(
+    ~ {
+      if (.y == 1952) {
+        # Somehow, perfectly predicts vote choice
+        # Registered to Vote Post-Election
+        # Coding error of ANES old data?
+        .x %>% select(-VCF0737)
+      } else {
+        .x
+      }
+    }
+  ) %>%
   ## ANES does not have prez vote if not midterm year
   map(
     ~ data_routine(
@@ -61,7 +73,16 @@ anes_onehot <- anes_list %>%
         select(
           -VCF0709, ## ticket splitting between Prez and House
           -VCF0302, ## Redundant party ID (either 3-pt or just redundant)
-          -VCF0303 ## Redundant party ID (either 3-pt or just redundant)
+          -VCF0303, ## Redundant party ID (either 3-pt or just redundant)
+          -VCF0735, ## Vote for U.S. House- Candidate Code
+          -VCF0736, ## Vote for U.S. House- Party
+          -VCF1011, ## Respondent Vote for U.S. House Candidate From Own Party
+                    ## in district of IW
+          -VCF0906, ## Thermometer - Democratic House Candidate
+          -VCF0907, ## Thermometer - Republican House Candidate
+          -VCF0908, ## Thermometer - Republican House Candidate
+          -VCF0909, ## Thermometer - Challenger House Candidate
+          -VCF9069 ## Strength Approve/Disapprove Running U.S. House Incumbent
         ),
       dep = "VCF0707",
       lvl = c(1, 2),
@@ -83,7 +104,14 @@ anes_onehot <- anes_list %>%
         select(
           -VCF0710, ## ticket splitting between Prez and Senate
           -VCF0302, ## Redundant party ID (either 3-pt or just redundant)
-          -VCF0303 ## Redundant party ID (either 3-pt or just redundant)
+          -VCF0303, ## Redundant party ID (either 3-pt or just redundant)
+          -VCF9056, ## Thermometer - Senate Democratic Candidate
+          -VCF9057, ## Thermometer - Senate Republican Candidate
+          -VCF9058, ## Thermometer - Senate Incumbent Candidate
+          -VCF9059, ## Thermometer - Senate Challenger
+          -VCF9060, ## Thermometer - Senator in State with Senate Race
+          -VCF9061, ## Thermometer - Senator 1 in State with No Senate Race)
+          -VCF9062 ## Thermometer - Senator 2 in State with No Senate Race)
         ),
       dep = "VCF0708",
       lvl = c(1, 2),
