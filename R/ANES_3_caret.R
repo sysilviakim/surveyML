@@ -1,5 +1,4 @@
 source(here::here("R", "utilities.R"))
-
 load(here("data", "anes-tidy", "anes-vl.RData"))
 
 if (!dir.exists(here("output/ANES/logit"))) {
@@ -10,7 +9,7 @@ if (!dir.exists(here("output/ANES/logit"))) {
 
 for (sfx in c("prezvote", "house", "senate")) {
   load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
-  for (yr in as.character(seq(1952, 2016, by = 2))) {
+  for (yr in as.character(anes_years)) {
     if (yr %in% names(anes_onehot)) {
       for (varset in seq(4)) {
         temp <- anes_onehot[[as.character(yr)]]

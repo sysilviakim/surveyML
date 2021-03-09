@@ -177,21 +177,6 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
       trControl = tc,
       data = temp$train
     )
-  } else if (method == "lm") {
-    out <- train(
-      as.numeric(depvar) ~ .,
-      metric = "RMSE",
-      method = method,
-      trControl = trainControl(
-        method = "cv",
-        number = 10,
-        allowParallel = TRUE,
-        verboseIter = FALSE,
-        seeds = rep_seeds(),
-        classProbs = TRUE
-      ),
-      data = temp$train
-    )
   } else if (method == "logit") {
     out <- train(
       as.factor(depvar) ~ .,
@@ -199,16 +184,6 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
       method = "glm",
       family = "binomial",
       trControl = tc,
-      data = temp$train
-    )
-  } else if (method == "lasso") {
-    out <- train(
-      as.factor(depvar) ~ .,
-      metric = metric,
-      method = "glmnet",
-      trControl = tc,
-      ## recheck tuning later
-      tuneGrid = expand.grid(alpha = 1, lambda = seq(0.01, 1, by = 0.1)),
       data = temp$train
     )
   }
@@ -392,7 +367,7 @@ po_full <- function(x, metric) {
     x, aes(x = Year, y = !!as.name(metric), colour = Set, linetype = Survey)
   ) +
     geom_line(size = 1) +
-    scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
+    scale_x_continuous(breaks = anes_years) +
     scale_color_viridis_d(
       direction = -1, name = "Specification", end = 0.85
     ) +
@@ -813,6 +788,7 @@ options(
 set_labels <- c(
   "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates"
 )
+anes_years <- seq(1952, 2016, by = 4)
 
 ### Jan's fit_control_basic equivalent
 tc <- trainControl(

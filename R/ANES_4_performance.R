@@ -12,7 +12,7 @@ vid <- perf <- list()
 
 for (sfx in c("prezvote", "house", "senate")) {
   load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
-  for (yr in as.character(seq(1952, 2016, by = 4))) {
+  for (yr in as.character(anes_years)) {
     temp <- anes_onehot[[as.character(yr)]]
 
     ## caret results
@@ -53,8 +53,8 @@ for (sfx in c("prezvote", "house", "senate")) {
         ## Save memory
         rm(list = paste0("turn.", method))
         gc(reset = TRUE)
-        save(perf, file = "output/ANES/ANES_perf.RData")
-        save(vid, file = "output/ANES/ANES_varimp.RData")
+        save(perf, file = here("output/ANES/ANES_perf.RData"))
+        save(vid, file = here("output/ANES/ANES_varimp.RData"))
       }
     }
   }
@@ -66,24 +66,11 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
     ~ {
       tab <- seq(4) %>%
         map(
-          function(x) {
-            perf_summ(
-              perf, .x[[1]], .x[[2]], x,
-              yr = seq(1952, 2016, 4)
-            )
-          }
+          function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years)
         ) %>%
         bind_rows(.id = "Set") %>%
         arrange(desc(Year), Set) %>%
-        mutate(
-          Set = factor(
-            Set,
-            levels = seq(4), labels = c(
-              "Demographics", "Demo. + PID", "Demo. + PID + Issues",
-              "All Observables"
-            )
-          )
-        ) %>%
+        mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
         rename(`Variable Specification` = Set) %>%
         select(-AUC_lower, -AUC_upper, -Accuracy_lower, -Accuracy_upper) %>%
         xtable(
@@ -118,3 +105,23 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
       )
     }
   )
+
+# Alternative, just accuracy between methods ===================================
+temp <- cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
+  map(
+    ~ {
+      seq(4) %>%
+        map(
+          function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years) %>%
+            select(Year, !!as.name(.x[[2]]) := CI)
+        ) %>%
+        bind_rows(.id = "Set") %>%
+        arrange(desc(Year), Set) %>%
+        mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+        rename(`Variable Specification` = Set)
+    }
+  ) %>%
+  Reduce(left_join, .) %>%
+  select(Year, `Variable Specification`, Logit = logit, CART = cart, RF = rf)
+
+
