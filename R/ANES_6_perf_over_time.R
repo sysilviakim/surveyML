@@ -1,7 +1,6 @@
 source(here::here("R", "utilities.R"))
 load(here("output/ANES/ANES_perf.RData"))
 load(here("output/ANES/ANES_varimp.RData"))
-anes_years <- seq(1952, 2016, by = 4)
 
 # Summary Rda files ============================================================
 cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
