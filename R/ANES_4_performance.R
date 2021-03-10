@@ -61,6 +61,9 @@ for (sfx in c("prezvote", "house", "senate")) {
 }
 
 # xtable export ================================================================
+load(here("output/ANES/ANES_perf.RData"))
+load(here("output/CCES/CCES_varimp.RData"))
+
 cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   map(
     ~ {
@@ -99,29 +102,49 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
         file = here(
           "tab", "perf", paste0("ANES_", .x[[1]], "_", .x[[2]], ".tex")
         ),
-        booktabs = TRUE,
-        floating = FALSE,
-        tabular.environment = "longtable"
+        booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
       )
     }
   )
 
 # Alternative, just accuracy between methods ===================================
-temp <- cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
-  map(
-    ~ {
-      seq(4) %>%
-        map(
-          function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years) %>%
-            select(Year, !!as.name(.x[[2]]) := CI)
+for (sfx in c("prezvote", "house", "senate")) {
+  tab <- c("logit", "cart", "rf") %>%
+    map(
+      ~ seq(4) %>%
+        map_dfr(
+          function(x) {
+            perf_summ(perf, sfx, .x, x, yr = anes_years) %>%
+              select(Year, !!as.name(.x) := CI) %>%
+              mutate(Set = x)
+          }
         ) %>%
-        bind_rows(.id = "Set") %>%
+        select(Set, everything()) %>%
         arrange(desc(Year), Set) %>%
         mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
         rename(`Variable Specification` = Set)
-    }
-  ) %>%
-  Reduce(left_join, .) %>%
-  select(Year, `Variable Specification`, Logit = logit, CART = cart, RF = rf)
-
-
+    ) %>%
+    Reduce(left_join, .) %>%
+    rename(Logit = logit, CART = cart, RF = rf) %>%
+    xtable(
+      label = paste0("tab:ANES_", sfx, "_accuracy"),
+      caption = paste0(
+        "Accuracy Range Comparison, ",
+        paste0(
+          ifelse(
+            sfx == "prezvote", "Presidential",
+            ifelse(sfx == "house", "House", "Senate")
+          ),
+          " Vote Choice, "
+        ),
+        "ANES 1952--2016"
+      ),
+      digits = 0
+    )
+  print(
+    tab,
+    include.rownames = FALSE,
+    file = here("tab", "perf", paste0("ANES_", sfx, "_accuracy.tex")),
+    booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
+  )
+}
