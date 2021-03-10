@@ -108,11 +108,10 @@ setNames(seq(4), c(1, 2, "house", "senate")) %>%
 
         print(
           tab,
-          include.rownames = FALSE,
+          table.placement = "H", include.rownames = FALSE, booktabs = TRUE,
           file = here(
             "tab", paste0("CCES_", ref$filename[.x], "_", method, ".tex")
-          ),
-          booktabs = TRUE
+          )
         )
       }
     }
@@ -124,12 +123,14 @@ for (sfx in c(prezvote = 1, house = 3, senate = 4)) {
     map(
       ~ seq(4) %>%
         map_dfr(
-          function(x) perf_summ(
-            within(perf, rm("year2006")), sfx, .x, x,
-            yr = rev(seq(2008, 2018, 2))
-          ) %>%
-            select(Year, !!as.name(.x) := CI) %>%
-            mutate(Set = x)
+          function(x) {
+            perf_summ(
+              within(perf, rm("year2006")), sfx, .x, x,
+              yr = rev(seq(2008, 2018, 2))
+            ) %>%
+              select(Year, !!as.name(.x) := CI) %>%
+              mutate(Set = x)
+          }
         ) %>%
         select(Set, everything()) %>%
         arrange(desc(Year), Set) %>%
@@ -150,10 +151,10 @@ for (sfx in c(prezvote = 1, house = 3, senate = 4)) {
       ),
       digits = 0
     )
-  
+
   print(
     tab,
-    include.rownames = FALSE,
+    include.rownames = FALSE, table.placement = "H",
     file = here("tab", paste0("CCES_", ref$filename[sfx], "_accuracy.tex")),
     booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
   )

@@ -7,7 +7,8 @@ load(here("output/CCES/CCES_varimp.RData"))
 summ_df <- seq(4) %>%
   map(
     ~ perf_summ(
-      within(perf, rm("year2006")), 1, "rf", .x, yr = rev(seq(2008, 2018, 2))
+      within(perf, rm("year2006")), 1, "rf", .x,
+      yr = rev(seq(2008, 2018, 2))
     )
   ) %>%
   bind_rows(.id = "Set")
@@ -17,7 +18,7 @@ set.seed(123)
 NS_auc_range <- seq(4) %>%
   map(
     ~ predict(
-      eval(parse(text = paste0("NS", .x)))$finalModel, 
+      eval(parse(text = paste0("NS", .x)))$finalModel,
       data = Xm_testSet_adjusted
     ) %>%
       .[["predictions"]] %>%
@@ -67,3 +68,44 @@ summ_df <- summ_df %>%
   arrange(desc(Year), Set)
 
 save(summ_df, file = here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda"))
+
+
+# SI figures ===================================================================
+cross2(c(preschoice = 1, house = 3, senate = 4), seq(4)) %>%
+  map(setNames, c("yvar", "set")) %>%
+  map(
+    function(x) {
+      pdf(
+        here(
+          "fig", "CCES",
+          paste0(
+            "CCES_perf_",
+            case_when(
+              x$yvar == 1 ~ "prezvote",
+              x$yvar == 3 ~ "house",
+              TRUE ~ "senate"
+            ),
+            "_set", x$set, ".pdf"
+          )
+        ),
+        width = 6, height = 1.5
+      )
+      grid_arrange_shared_legend(
+        list = roc_comparison(
+          within(perf, rm("year2006")),
+          yvar = x$yvar, set = x$set
+        ) %>%
+          imap(
+            ~ pdf_default(.x + ggtitle(gsub("year", "", .y))) +
+              theme(
+                axis.title = element_blank(),
+                plot.title = element_text(size = 10)
+              ) +
+              scale_x_continuous(breaks = c(0, 0.5, 1.0)) +
+              scale_y_continuous(breaks = c(0, 0.5, 1.0))
+          ),
+        ncol = 6, nrow = 1
+      )
+      dev.off()
+    }
+  )
