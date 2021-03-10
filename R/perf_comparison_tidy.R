@@ -3,7 +3,7 @@ source(here::here("R", "utilities.R"))
 # Load data, create subdirectories =============================================
 perf <- list(
   CCNS = loadRData(here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda")) %>%
-    mutate(Survey = "CCES/NS"),
+    mutate(Survey = ifelse(Year == 2020, "NS", "CCES")),
   ANES = loadRData(here("data/anes-tidy/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
@@ -17,7 +17,8 @@ if (!dir.exists(here("tab/avg"))) {
 # If put into simple linear regression =========================================
 for (metric in c("Accuracy", "AUC", "F1")) {
   cross2(
-    c("ANES", "all"), c(set1 = "Demographics Only", set2 = "Demo. + PID")
+    c("ANES", "CCES", "NS", "all"),
+    c(set1 = "Demographics Only", set2 = "Demo. + PID")
   ) %>%
     map(
       ~ {
@@ -42,50 +43,52 @@ for (metric in c("Accuracy", "AUC", "F1")) {
         )
         
         # Then a linear slope ==================================================
-        lm_out <- temp %>%
-          lm(sprintf("%s ~ Year", metric), data = .) %>%
-          broom::tidy()
-
-        c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
-          imap(
-            function(x, y) {
-              lm_out %>%
-                filter(term == "Year") %>%
-                .[[x]] %>%
-                round(
-                  .,
-                  digits = ifelse(
-                    x == "p.value",
-                    max(
-                      2,
-                      str_match_all(
-                        formatC(., format = "e"),
-                        "-([0-9]+)"
-                      )[[1]][1, 2] %>% as.numeric()
-                    ),
-                    max(
-                      4,
-                      str_match_all(
-                        formatC(., format = "e"),
-                        "-([0-9]+)"
-                      )[[1]][1, 2] %>% as.numeric()
+        if (.x[[1]] %in% c("ANES", "all")) {
+          lm_out <- temp %>%
+            lm(sprintf("%s ~ Year", metric), data = .) %>%
+            broom::tidy()
+          
+          c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
+            imap(
+              function(x, y) {
+                lm_out %>%
+                  filter(term == "Year") %>%
+                  .[[x]] %>%
+                  round(
+                    .,
+                    digits = ifelse(
+                      x == "p.value",
+                      max(
+                        2,
+                        str_match_all(
+                          formatC(., format = "e"),
+                          "-([0-9]+)"
+                        )[[1]][1, 2] %>% as.numeric()
+                      ),
+                      max(
+                        4,
+                        str_match_all(
+                          formatC(., format = "e"),
+                          "-([0-9]+)"
+                        )[[1]][1, 2] %>% as.numeric()
+                      )
+                    )
+                  ) %>%
+                  write(
+                    .,
+                    file = here(
+                      "tab", "reg",
+                      paste0(
+                        .x[[1]], "_ts_",
+                        ifelse(grepl("PID", .x[[2]]), "set2", "set1"),
+                        "_", tolower(metric),
+                        "_slope_", y, ".tex"
+                      )
                     )
                   )
-                ) %>%
-                write(
-                  .,
-                  file = here(
-                    "tab", "reg",
-                    paste0(
-                      .x[[1]], "_ts_",
-                      ifelse(grepl("PID", .x[[2]]), "set2", "set1"),
-                      "_", tolower(metric),
-                      "_slope_", y, ".tex"
-                    )
-                  )
-                )
-            }
-          )
+              }
+            )
+        }
       }
     )
 }
@@ -114,7 +117,8 @@ for (yr in c(2008, 2016, 2020)) {
 # Increase in accuracy from Spec. 2 ============================================
 for (metric in c("Accuracy", "AUC", "F1")) {
   cross2(
-    c("ANES", "all"), c(set3 = "Demo. + PID + Issues", set4 = "All Covariates")
+    c("ANES", "CCES", "NS", "all"),
+    c(set3 = "Demo. + PID + Issues", set4 = "All Covariates")
   ) %>%
     map(
       ~ {
@@ -147,7 +151,8 @@ for (metric in c("Accuracy", "AUC", "F1")) {
 # Increase in accuracy from Spec. 2 decreasing over time? ======================
 for (metric in c("Accuracy", "AUC", "F1")) {
   cross2(
-    c("ANES", "all"), c(set3 = "Demo. + PID + Issues", set4 = "All Covariates")
+    c("ANES", "CCES", "all"),
+    c(set3 = "Demo. + PID + Issues", set4 = "All Covariates")
   ) %>%
     map(
       ~ {
