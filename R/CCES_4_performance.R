@@ -63,7 +63,7 @@ load(here("output/CCES/CCES_perf.RData"))
 load(here("output/CCES/CCES_varimp.RData"))
 
 ref <- tibble(
-  .x = seq(4),
+  idx = seq(4),
   caption = c(
     "Presidential Vote Choice, ", "Presidential Approval Rating, ",
     "House Vote Choice, ", "Senate Vote Choice, "
@@ -71,6 +71,7 @@ ref <- tibble(
   filename = c("preschoice", "presapprov", "house", "senate")
 )
 
+# xtable export ================================================================
 setNames(seq(4), c(1, 2, "house", "senate")) %>%
   imap(
     ~ {
@@ -116,3 +117,44 @@ setNames(seq(4), c(1, 2, "house", "senate")) %>%
       }
     }
   )
+
+# Alternative, just accuracy between methods ===================================
+for (sfx in c(prezvote = 1, house = 3, senate = 4)) {
+  tab <- c("logit", "cart", "rf") %>%
+    map(
+      ~ seq(4) %>%
+        map_dfr(
+          function(x) perf_summ(
+            within(perf, rm("year2006")), sfx, .x, x,
+            yr = rev(seq(2008, 2018, 2))
+          ) %>%
+            select(Year, !!as.name(.x) := CI) %>%
+            mutate(Set = x)
+        ) %>%
+        select(Set, everything()) %>%
+        arrange(desc(Year), Set) %>%
+        mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+        rename(`Variable Specification` = Set)
+    ) %>%
+    Reduce(left_join, .) %>%
+    rename(Logit = logit, CART = cart, RF = rf) %>%
+    xtable(
+      label = paste0("tab:CCES_", sfx, "_accuracy"),
+      caption = paste0(
+        "Accuracy Range Comparison, ",
+        paste0(
+          ifelse(sfx == 1, "Presidential", ifelse(sfx == 3, "House", "Senate")),
+          " Vote Choice, "
+        ),
+        "CCES 2008--2018"
+      ),
+      digits = 0
+    )
+  
+  print(
+    tab,
+    include.rownames = FALSE,
+    file = here("tab", paste0("CCES_", ref$filename[sfx], "_accuracy.tex")),
+    booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
+  )
+}
