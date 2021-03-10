@@ -362,21 +362,38 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
   return(p)
 }
 
-po_full <- function(x, metric) {
-  ggplot(
-    x, aes(x = Year, y = !!as.name(metric), colour = Set, linetype = Survey)
-  ) +
+po_full <- function(x, metric, ylim = c(0.38, 1.0),
+                    colour_nrow = 2, linetype_nrow = 2) {
+  if (length(unique(x$Survey)) > 1) {
+    p <- ggplot(
+      x, aes(x = Year, y = !!as.name(metric), colour = Set, linetype = Survey)
+    )
+  } else {
+    p <- ggplot(
+      x, aes(x = Year, y = !!as.name(metric), colour = Set)
+    )
+  }
+  
+  p <- p +
     geom_line(size = 1) +
     scale_x_continuous(breaks = anes_years) +
     scale_color_viridis_d(
       direction = -1, name = "Specification", end = 0.85
-    ) +
-    scale_linetype_manual(name = "Survey", values = c("solid", "dashed")) +
-    guides(
-      colour = guide_legend(nrow = 2, byrow = TRUE),
-      linetype = guide_legend(nrow = 2, byrow = TRUE)
-    ) +
-    scale_y_continuous(limits = c(0.38, 1.0))
+    ) + 
+    guides(colour = guide_legend(nrow = colour_nrow, byrow = TRUE))
+  
+  if (length(unique(x$Survey)) > 1) {
+    p <- p +
+      scale_linetype_manual(name = "Survey", values = c("solid", "dashed")) +
+      guides(
+        colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
+        linetype = guide_legend(nrow = linetype_nrow, byrow = TRUE)
+      )
+  }
+  
+  p <- p +
+    scale_y_continuous(limits = ylim)
+  return(p)
 }
 
 # Within-year, between-set intersection fxn
