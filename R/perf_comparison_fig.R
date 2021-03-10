@@ -11,7 +11,7 @@ raw_list <- list(
 perf <- list(
   CCNS = loadRData(here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda")) %>%
     mutate(Survey = "CCES/NS"),
-  ANES = loadRData(here("data/anes-tidy/perf_summ_ANES.Rda")) %>%
+  ANES = loadRData(here("data/anes-tidy/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
   bind_rows()
