@@ -8,7 +8,7 @@ source(here::here("R", "CCES_1_data.R"))
 df_ls <- df_ls %>%
   map(
     ~ .x %>%
-      select(-contains("weight|starttime|endtime")) %>%
+      select(-matches("weight|starttime|endtime")) %>%
       ## I'll keep lookupzip
       select(
         -any_of(c(
