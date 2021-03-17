@@ -6,6 +6,7 @@ data/*
 lit/*
 slides/*
 R/old/*
+R/intermediate_code/*
 fig/CCES/rf/*_senate_*
 fig/CCES/rf/*_house_*
 fig/CCES/rf/*approval*
