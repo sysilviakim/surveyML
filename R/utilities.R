@@ -192,8 +192,8 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
 
 pdf_varimp <- function(x, filename, labels = NULL, font = NULL, size = 12) {
   if (is.null(font)) font <- "Kievit Offc Pro"
-  temp <- varImp(x)
   set.seed(100)
+  temp <- varImp(x)
   ## Only actually important variables. Not zeros.
   p <- ggplot(
     temp,
