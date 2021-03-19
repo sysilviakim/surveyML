@@ -1,13 +1,13 @@
-##############################################
+####################################################
 # Get important predictors of TRUMP support in 2020
-##############################################
+###################################################
 
 # Update: Dec. 2020
 # See NS_1D_data_prep.R for latest changes
 
-source("NS_0_labels.R")
-source("NS_1D_data_prep.R")
-source("NS_2_prep_ML.R")
+source("R/NS_0_labels.R")
+source("R/NS_1D_data_prep.R")
+source("R/NS_2_prep_ML.R")
 
 library(assertthat)
 
