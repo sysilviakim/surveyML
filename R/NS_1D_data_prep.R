@@ -16,7 +16,7 @@ library(ranger)
 
 library(caret)
 
-# ISSUES to note with the 2ns NS data  release [Sept. 2020]
+# ISSUES to note with the 2nd NS data  release [Sept. 2020]
 ##    Must change pid7 to  pid7_legacy
 ##    Better not to include Jabolish_priv_insurance [too many NAs]
 ##    Income is missing for ~15K respondents
