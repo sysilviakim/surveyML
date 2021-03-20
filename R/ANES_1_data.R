@@ -69,10 +69,16 @@ vl <- list(
     filter(!grepl("gave money|does working", tolower(label))) %>%
     ## This excludes "Government Should Ensure Fair Jobs for Blacks"
     filter(!grepl("blacks ", tolower(label))) %>%
-    .$var
-  ## c(
-  ##   which(anes_labels$var == "VCF0805"):which(anes_labels$var == "VCF0894"),
-  ##   which(anes_labels$var == "VCF9013"):which(anes_labels$var == "VCF9020")
-  ## )
+    .$var,
+  ## Appendix materials: 
+  ## demo. + religion: church attendance recoded from 1970 on, so two sep. var
+  set5 = c("VCF0128", "VCF0131", "VCF0130"),
+  ## demo. + south
+  set6 = "VCF0113",
+  ## demo. + symbolic ideology, 3-pt
+  set7 = "VCF0804"
 )
+
+## set8 can just re-use set3
+vl$set8 <- vl$set3
 save(vl, file = here("data", "anes-tidy", "anes-vl.RData"))
