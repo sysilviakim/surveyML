@@ -11,6 +11,66 @@ source("R/NS_2_prep_ML.R")
 
 # library(assertthat)
 
+# ADD RELIGION
+R_spec1B <- train(
+  trump2Pvote_intent ~ educ_category_1 +
+    educ_category_2 +
+    educ_category_3 +
+    educ_category_4 +
+    inc_group_1 + inc_group_2 +
+    inc_group_3 + inc_group_4 +
+    inc_group_5 + inc_group_NA +
+    Men_1 +
+    White_1 + Black_1 + Asian_1 + Hispanic_1 +
+    age,
+  data = Xm %>%
+    slice(D_trainsetIndex_20percent),
+  method = "ranger",
+  importance = "permutation",
+  trControl = fit_control_CV,
+  tuneLength = 10)
+
+# NORTH VS SOUTH
+# R_spec1C <- train(
+#   trump2Pvote_intent ~ educ_category_1 +
+#     educ_category_2 +
+#     educ_category_3 +
+#     educ_category_4 +
+#     inc_group_1 + inc_group_2 +
+#     inc_group_3 + inc_group_4 +
+#     inc_group_5 + inc_group_NA +
+#     Men_1 +
+#     White_1 + Black_1 + Asian_1 + Hispanic_1 +
+#     age,
+#   data = Xm %>%
+#     slice(D_trainsetIndex_20percent),
+#   method = "ranger",
+#   importance = "permutation",
+#   trControl = fit_control_CV,
+#   tuneLength = 10)
+
+# DEMO. + symbolic ideology
+R_spec1D <- train(
+  trump2Pvote_intent ~ educ_category_1 +
+    educ_category_2 +
+    educ_category_3 +
+    educ_category_4 +
+    inc_group_1 + inc_group_2 +
+    inc_group_3 + inc_group_4 +
+    inc_group_5 + inc_group_NA +
+    Men_1 +
+    White_1 + Black_1 + Asian_1 + Hispanic_1 +
+    age,
+  data = Xm %>%
+    slice(D_trainsetIndex_20percent),
+  method = "ranger",
+  importance = "permutation",
+  trControl = fit_control_CV,
+  tuneLength = 10)
+
+
+# DEMO. + ISSUES
+
 Xm %>%
   select(outcome,
          matches('ideo')) %>%
