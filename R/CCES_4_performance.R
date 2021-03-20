@@ -1,4 +1,5 @@
 source(here::here("R", "utilities.R"))
+load(here("data", "variable_labels.Rda"))
 
 ## Extract performance measures ================================================
 ## loop to enable gc()

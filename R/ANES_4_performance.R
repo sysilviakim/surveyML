@@ -1,4 +1,6 @@
 source(here::here("R", "utilities.R"))
+load(here("data", "variable_labels.Rda"))
+
 if (!dir.exists(here("tab", "perf"))) {
   dir.create(here("tab", "perf"))
 }
