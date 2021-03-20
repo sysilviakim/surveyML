@@ -1,8 +1,3 @@
-####################################################
-# Get important predictors of TRUMP support in 2020
-###################################################
-
-# Update: Dec. 2020
 # See NS_1D_data_prep.R for latest changes
 
 source("R/NS_0_labels.R")
@@ -13,8 +8,8 @@ library(assertthat)
 
 set.seed(seed)
 
-# Only education, gender, age, and race
-ranger_wImp_spec0 <- train(
+# Only education, gender, age, and race [so dropping income]
+NS_logit__spec0 <- train(
   trump2Pvote_intent ~ educ_category_1 +
     educ_category_2 +
     educ_category_3 +
@@ -24,13 +19,13 @@ ranger_wImp_spec0 <- train(
     age,
   data = Xm %>%
     slice(D_trainsetIndex_20percent),
-  method = "ranger",
-  importance = "permutation",
+  method = "glm",
+  family = "binomial",
   trControl = fit_control_CV,
   tuneLength = 5
 )
 
-ranger_wImp_spec1 <- train(
+NS_logit__spec1 <- train(
   trump2Pvote_intent ~ educ_category_1 +
     educ_category_2 +
     educ_category_3 +
@@ -43,13 +38,13 @@ ranger_wImp_spec1 <- train(
     age,
   data = Xm %>%
     slice(D_trainsetIndex_20percent),
-  method = "ranger",
-  importance = "permutation",
+  method = "glm",
+  family = "binomial",
   trControl = fit_control_CV,
   tuneLength = 10
 )
 
-ranger_wImp_spec2 <- train(
+NS_logit__spec2 <- train(
   trump2Pvote_intent ~ educ_category_1 +
     educ_category_2 +
     educ_category_3 +
@@ -69,38 +64,34 @@ ranger_wImp_spec2 <- train(
     pid7_legacy_7,
   data = Xm %>%
     slice(D_trainsetIndex_20percent),
-  method = "ranger",
-  importance = "permutation",
+  method = "glm",
+  family = "binomial",
   trControl = fit_control_CV,
   tuneLength = 10
 )
 
-ranger_wImp_spec3 <- train(trump2Pvote_intent ~ .,
+NS_logit__spec3 <- train(trump2Pvote_intent ~ .,
   data = Xm %>%
     slice(D_trainsetIndex_20percent) %>%
     select(Jabortion_latepermit_DISAGREE_0:inc_group_NA, outcome),
-  method = "ranger",
-  importance = "permutation",
+  method = "glm",
+  family = "binomial",
   trControl = fit_control_CV,
   tuneLength = 10
 )
 
-ranger_wImp_spec4 <- train(trump2Pvote_intent ~ .,
+NS_logit__spec4 <- train(trump2Pvote_intent ~ .,
   data = Xm[D_trainsetIndex_20percent, ],
-  method = "ranger",
-  importance = "permutation",
+  method = "glm",
+  family = "binomial",
   trControl = fit_control_CV,
   tuneLength = 10
 )
 
-logit_spec4 <- glm(trump2Pvote_intent ~ .,
-  data = Xm[D_trainsetIndex_20percent, ],
-  family = "binomial"
-)
 
-saveRDS(ranger_wImp_spec0, "output/Nationscape/ranger_Nationscape_D0.RDS")
-saveRDS(ranger_wImp_spec1, "output/Nationscape/ranger_Nationscape_D1.RDS")
-saveRDS(ranger_wImp_spec2, "output/Nationscape/ranger_Nationscape_D2.RDS")
-saveRDS(ranger_wImp_spec3, "output/Nationscape/ranger_Nationscape_D3.RDS")
-saveRDS(ranger_wImp_spec4, "output/Nationscape/ranger_Nationscape_D4.RDS")
+saveRDS(NS_logit__spec0, "output/Nationscape/logit_Nationscape_D0.RDS")
+saveRDS(NS_logit__spec1, "output/Nationscape/logit_Nationscape_D1.RDS")
+saveRDS(NS_logit__spec2, "output/Nationscape/logit_Nationscape_D2.RDS")
+saveRDS(NS_logit__spec3, "output/Nationscape/logit_Nationscape_D3.RDS")
+saveRDS(NS_logit__spec4, "output/Nationscape/logit_Nationscape_D4.RDS")
 
