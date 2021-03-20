@@ -30,21 +30,19 @@ cces <- seq(nrow(file_ls)) %>%
     ~ {
       if (file_ls$file_format[.x] == ".dta") {
         read_dta(here("data/cces", file_ls$file_name[.x]))
-      } else {
-        NULL
       }
     }
   )
 
 # CCES: 2018 and 2010 only =====================================================
 dta_labels <- cces %>%
+  keep(~ !is.null(.x)) %>%
   map(~ select(.x, where(is.labelled))) %>%
-  keep(~ ncol(.x) > 0) %>%
   map(
     function(x) {
       x %>%
         imap_dfr(
-          ~ attributes(.x)$labels %>%
+          ~ c(attributes(.x)$labels, "answer missing" = 999) %>%
             enframe() %>%
             mutate(
               name = paste0(attributes(.x)$label, ": ", name),
@@ -86,7 +84,7 @@ anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta")) %>%
 
 vl$anes <- anes %>%
   imap_dfr(
-    ~ attributes(.x)$labels %>%
+    ~ c(attributes(.x)$labels, "answer missing" = 999) %>%
       enframe() %>%
       mutate(
         name = paste0(attributes(.x)$label, ": ", name),
@@ -102,6 +100,8 @@ vl$anes <- anes %>%
   slice(n()) %>%
   select(value, name) %>%
   deframe()
+
+assert_that(length(vl$anes) > 5000)
 
 # Save output ==================================================================
 save(vl, file = here("data", "variable_labels.Rda"))
