@@ -13,7 +13,7 @@ library(assertthat)
 
 set.seed(seed)
 
-# Only education, gender, age, and race
+# Only education, gender, age, and race [this is not yet Spec. 1!]
 ranger_wImp_spec0 <- train(
   trump2Pvote_intent ~ educ_category_1 +
     educ_category_2 +

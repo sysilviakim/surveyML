@@ -9,9 +9,21 @@ source("R/NS_0_labels.R")
 source("R/NS_1D_data_prep.R")
 source("R/NS_2_prep_ML.R")
 
-library(assertthat)
+# library(assertthat)
 
-set.seed(seed)
+Xm %>%
+  select(outcome,
+         matches('ideo')) %>%
+  head(2)
+
+
+
+
+
+
+
+
+
 
 # Only education, and race
 CART_Demo_MINI <- train(
@@ -42,5 +54,30 @@ ranger_Demo_MINI <- train(
   tuneLength = 5
 )
 
-
 # saveRDS(ranger_wImp_spec0, "output/Nationscape/ranger_Nationscape_D0.RDS")
+
+
+get_performance_stats(x = CART_Demo_MINI,
+                      test = Xm_testSet_adjusted,
+                      depvar = "trump2Pvote_intent")
+get_performance_stats(x = ranger_Demo_MINI,
+                      test = Xm_testSet_adjusted,
+                      depvar = "trump2Pvote_intent")
+
+
+# MODEL VIZ
+CART_Demo_MINI$finalModel$frame$var
+
+library(rpart.plot)
+prp(CART_Demo_MINI$finalModel,
+    type=5,
+    branch=.4,
+    extra=104,
+    under=T,
+    digits = 3,
+    box.palette=c("BuRd"),
+    branch.col = "gray",
+    branch.lwd = 2,
+    fallen.leaves = TRUE,
+    tweak=1.6)
+

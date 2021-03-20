@@ -103,8 +103,8 @@ a_analysis <- a_release2 %>%
     !is.na(trump_biden),
     trump_biden != 999
   ) %>% 
-  # dropping undecided voters [just making sure, but note 
-  # that outcome was defined carefully above to exclude undecided voters]
+  # dropping undecided voters [but note that the outcome was defined carefully 
+  # above to exclude undecided voters]
   select(
     outcome,
     monthyear,
@@ -149,27 +149,30 @@ a_analysis <- a_release2 %>%
   )
 
 
-# devtools::install_github("sysilviakim/Kmisc")
-# library(Kmisc)
-# source("utilities.R")
-#
-#
-# var_db <- data_routine(a_analysis %>% select(-monthyear),
-#                        dep = "biden20", lvl = c(0, 1), lbl = c("Trump", "Biden"),
-#                        dbl = "age", na = "NA")
+Xm <- bind_cols(
+  a_analysis %>% 
+    select(-trump2Pvote_intent, -age, -monthyear) %>%
+    mutate_all(as.factor) %>%
+    dummy_cols(remove_selected_columns = TRUE),
+  a_analysis %>% 
+    select(trump2Pvote_intent, age, monthyear) %>%
+    mutate(trump2Pvote_intent = factor(trump2Pvote_intent))
+) %>%
+  filter(complete.cases(.))
+
+
 
 
 # # Before Oct. 2020, JZ created factors using the code below:
 # names(a_analysis)
 # # One-hot encoding
-# # SUBSETTING IS FRAGILE as we are relying here on the correct order of columns...
+# # But here we are relying on the correct order of columns
 # a_analysis[,which(names(a_analysis)=="pid7_legacy"):which(names(a_analysis)=="sen_knowledge")] <- 
 # lapply(a_analysis[,which(names(a_analysis)=="pid7_legacy"):which(names(a_analysis)=="sen_knowledge")] , factor)
 # Xm1 <- dummy_cols(a_analysis,remove_selected_columns=T)
 # Xm <- Xm1 %>% filter(complete.cases(.))
 
-# This must come AFTER one-hot encoding the features,
-# because we don't want to have two separate outcome variables:
+# We don't want to have two separate outcome variables:
 # just keep a single binary variable.
 
 # # Create factors/dummies
@@ -186,17 +189,6 @@ a_analysis <- a_release2 %>%
 # Xm <- Xm1 %>% 
 #   bind_cols(a_analysis %>% select(trump2Pvote_intent, age, monthyear))
 # Xm <- Xm %>% filter(complete.cases(.))
-
-Xm <- bind_cols(
-  a_analysis %>% 
-    select(-trump2Pvote_intent, -age, -monthyear) %>%
-    mutate_all(as.factor) %>%
-    dummy_cols(remove_selected_columns = TRUE),
-  a_analysis %>% 
-    select(trump2Pvote_intent, age, monthyear) %>%
-    mutate(trump2Pvote_intent = factor(trump2Pvote_intent))
-) %>%
-  filter(complete.cases(.))
 
 # Xm$trump2Pvote_intent <- factor(
 #   Xm$trump2Pvote_intent, labels = c("Biden", "Trump")
