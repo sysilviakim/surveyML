@@ -54,8 +54,8 @@
       "RemoteRepo": "Kmisc",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "9ad33e30eba73ff70efac1d48163b2871ba12010",
-      "Hash": "240122b0c41eef5e50e2935b459b5145"
+      "RemoteSha": "38344ade4489802efecf3bb7a2a674ff08bc80e2",
+      "Hash": "f06142a591515902df2eb86c8e3d45bd"
     },
     "MASS": {
       "Package": "MASS",
