@@ -259,13 +259,6 @@ rf_performance_Brier
 # Now let's evaluate models one the basis of the test set,
 # and calculate various OOS statistics
 
-source("R/NS_0_labels.R")
-source("R/NS_1D_data_prep.R")
-# The "ML" file is also necessary because we need the correct indices
-outcome <- "trump2Pvote_intent"
-source("R/NS_2_prep_ML.R")
-
-
 #############################
 # CALCULATE OOS PREDICTIONS
 #############################
