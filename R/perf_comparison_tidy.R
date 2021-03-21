@@ -36,7 +36,7 @@ for (metric in c("Accuracy", "AUC", "F1")) {
           file = here(
             "tab", "avg",
             paste0(
-              .x[[1]], "_avg_", ifelse(grepl("PID", .x[[2]]), "set2", "set1"),
+              .x[[1]], "_avg_", paste0("set", which(set_labels == .x[[2]])),
               "_", tolower(metric), ".tex"
             )
           )
@@ -80,7 +80,7 @@ for (metric in c("Accuracy", "AUC", "F1")) {
                       "tab", "reg",
                       paste0(
                         .x[[1]], "_ts_",
-                        ifelse(grepl("PID", .x[[2]]), "set2", "set1"),
+                        paste0("set", which(set_labels == .x[[2]])),
                         "_", tolower(metric),
                         "_slope_", y, ".tex"
                       )
