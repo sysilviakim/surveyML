@@ -98,7 +98,7 @@ df_ls$yr_2006 <- df_ls$yr_2006 %>%
 
 # Also, create rougher factor variables for Appendix runs ======================
 for (yr in cces_years) {
-  if (yr < 2011) {
+  if (yr > 2010) {
     rvar <- "religpew"
     svar <- "inputstate"
     ivar <- "ideo5"
@@ -107,7 +107,7 @@ for (yr in cces_years) {
     svar <- "V206"
     ivar <- "V243"
   }
-  df[[paste0("yr_", yr)]] <- df[[paste0("yr_", yr)]] %>%
+  df_ls[[paste0("yr_", yr)]] <- df_ls[[paste0("yr_", yr)]] %>%
     mutate(
       relig_appendix = case_when(
         !!as.name(rvar) == 1 ~ 1, ## protestant
