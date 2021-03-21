@@ -18,7 +18,7 @@ if (!dir.exists(here("tab/avg"))) {
 for (metric in c("Accuracy", "AUC", "F1")) {
   cross2(
     c("ANES", "CCES", "NS", "all"),
-    c(set1 = "Demographics Only", set2 = "Demo. + PID")
+    setNames(set_labels, nm = paste0("set", seq(8)))
   ) %>%
     map(
       ~ {
@@ -41,13 +41,13 @@ for (metric in c("Accuracy", "AUC", "F1")) {
             )
           )
         )
-        
+
         # Then a linear slope ==================================================
         if (.x[[1]] %in% c("ANES", "all")) {
           lm_out <- temp %>%
             lm(sprintf("%s ~ Year", metric), data = .) %>%
             broom::tidy()
-          
+
           c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
             imap(
               function(x, y) {
@@ -96,20 +96,22 @@ for (metric in c("Accuracy", "AUC", "F1")) {
 # Some special cases to mention ================================================
 for (yr in c(1960, 1972, 2000, 2008)) {
   write(
-    perf %>% 
-      filter(Set == "Demographics Only" & Year == yr & Survey == "ANES") %>% 
-      .$Accuracy %>%
-      {round(. * 100, digits = 1)},
+    perf %>%
+      filter(Set == "Demographics Only" & Year == yr & Survey == "ANES") %>%
+      .$Accuracy %>% {
+        round(. * 100, digits = 1)
+      },
     file = here("tab", "selected", paste0("ANES_", yr, "_accuracy_set1.tex"))
   )
 }
 
 for (yr in c(2008, 2016, 2020)) {
   write(
-    perf %>% 
-      filter(Set == "Demographics Only" & Year == yr & Survey != "ANES") %>% 
-      .$Accuracy %>%
-      {round(. * 100, digits = 1)},
+    perf %>%
+      filter(Set == "Demographics Only" & Year == yr & Survey != "ANES") %>%
+      .$Accuracy %>% {
+        round(. * 100, digits = 1)
+      },
     file = here("tab", "selected", paste0("CCES_", yr, "_accuracy_set1.tex"))
   )
 }
@@ -127,10 +129,10 @@ for (metric in c("Accuracy", "AUC", "F1")) {
         } else {
           temp <- perf %>% filter(Survey == .x[[1]])
         }
-        
+
         round(
-          (mean(temp %>% filter(Set == .x[[2]]) %>% .[[metric]]) - 
-             mean(temp %>% filter(Set == "Demo. + PID") %>% .[[metric]])) * 100,
+          (mean(temp %>% filter(Set == .x[[2]]) %>% .[[metric]]) -
+            mean(temp %>% filter(Set == "Demo. + PID") %>% .[[metric]])) * 100,
           digits = 1
         ) %>%
           write(
@@ -143,7 +145,6 @@ for (metric in c("Accuracy", "AUC", "F1")) {
               )
             )
           )
-  
       }
     )
 }
@@ -161,18 +162,19 @@ for (metric in c("Accuracy", "AUC", "F1")) {
         } else {
           temp <- perf %>% filter(Survey == .x[[1]])
         }
-        
-        lm_out <- temp %>% 
+
+        lm_out <- temp %>%
           filter(Set == .x[[2]] | Set == "Demo. + PID") %>%
           pivot_wider(
-            id_cols = c(Year, Survey), names_from = Set, values_from = metric
+            id_cols = c(Year, Survey),
+            names_from = Set, values_from = all_of(metric)
           ) %>%
           mutate(
             gap = !!as.name(.x[[2]]) - `Demo. + PID`
           ) %>%
           lm(gap ~ Year, data = .) %>%
           broom::tidy()
-        
+
         c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
           imap(
             function(x, y) {
