@@ -133,15 +133,6 @@ ranger_Demo_MINI <- train(
   tuneLength = 5
 )
 
-# saveRDS(ranger_wImp_spec0, "output/Nationscape/ranger_Nationscape_D0.RDS")
-
-
-get_performance_stats(x = CART_Demo_MINI,
-                      test = Xm_testSet_adjusted,
-                      depvar = "trump2Pvote_intent")
-
-
-
 
 # MODEL VIZ
 CART_Demo_MINI$finalModel$frame$var
