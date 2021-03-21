@@ -113,18 +113,18 @@ for (yr in cces_years) {
         !!as.name(rvar) == 1 ~ 1, ## protestant
         !!as.name(rvar) == 2 ~ 2, ## catholic
         !!as.name(rvar) == 5 ~ 3, ## jewish
-        is.na(x) ~ NA,
+        is.na(!!as.name(rvar)) ~ NA_real_,
         TRUE ~ 4
       ),
       south_appendix = case_when(
         !!as.name(svar) %in% (state_df %>% filter(south == 1) %>% .$stfips) ~ 1,
-        is.na(x) ~ NA,
+        is.na(!!as.name(svar)) ~ NA_real_,
         TRUE ~ 2
       ),
       ideo3_appendix = case_when(
         !!as.name(ivar) < 3 ~ 1, ## liberal
         !!as.name(ivar) > 3 ~ 3, ## conservative
-        is.na(x) ~ NA,
+        is.na(!!as.name(ivar)) ~ NA_real_,
         TRUE ~ 2
       )
     )
