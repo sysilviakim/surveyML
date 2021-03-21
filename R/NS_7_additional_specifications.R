@@ -28,6 +28,10 @@ demos <- c(
   "age"
 )
 
+Xm$Liberal <- ifelse(Xm$ideo5_1==1 | Xm$ideo5_2==1, 1, 0)
+Xm$Moderate <- ifelse(Xm$ideo5_3, 1, 0)
+Xm$Conservative <- ifelse(Xm$ideo5_4==1 | Xm$ideo5_5==1, 1, 0)
+
 ############################
 # Demographics +  religion
 ############################
@@ -62,10 +66,6 @@ saveRDS(R_spec1C, "output/Nationscape/R_spec1C.RDS")
 ################################
 # DEMO. + symbolic ideology
 ################################
-Xm$Liberal <- ifelse(Xm$ideo5_1==1 | Xm$ideo5_2==1, 1, 0)
-Xm$Moderate <- ifelse(Xm$ideo5_3, 1, 0)
-Xm$Conservative <- ifelse(Xm$ideo5_4==1 | Xm$ideo5_5==1, 1, 0)
-
 R_spec1D <- train(
   trump2Pvote_intent ~ .,
   data = Xm %>%
@@ -102,8 +102,9 @@ R_spec1E <- train(
 
 
 
-
-
+#############
+# CART MODELS
+#############
 # Only education, and race
 CART_Demo_MINI <- train(
   trump2Pvote_intent ~ educ_category_1 +
@@ -118,20 +119,18 @@ CART_Demo_MINI <- train(
   tuneLength = 5
 )
 
-# Only education, and race
-ranger_Demo_MINI <- train(
-  trump2Pvote_intent ~ educ_category_1 +
-    educ_category_2 +
-    educ_category_3 +
-    educ_category_4 +
-    White_1 + Black_1 + Asian_1 + Hispanic_1,
+CART_spec1D <- train(
+  trump2Pvote_intent ~ .,
   data = Xm %>%
+    select(outcome,
+           demos,
+           Conservative,
+           Moderate,
+           Liberal) %>%
     slice(D_trainsetIndex_20percent),
-  method = "ranger",
-  importance = "permutation",
+  method = "rpart",
   trControl = fit_control_CV,
-  tuneLength = 5
-)
+  tuneLength = 10)
 
 
 # MODEL VIZ
@@ -139,6 +138,18 @@ CART_Demo_MINI$finalModel$frame$var
 
 library(rpart.plot)
 prp(CART_Demo_MINI$finalModel,
+    type=5,
+    branch=.4,
+    extra=104,
+    under=T,
+    digits = 3,
+    box.palette=c("BuRd"),
+    branch.col = "gray",
+    branch.lwd = 2,
+    fallen.leaves = TRUE,
+    tweak=1.6)
+
+prp(CART_spec1D$finalModel,
     type=5,
     branch=.4,
     extra=104,
