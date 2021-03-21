@@ -1,6 +1,13 @@
 ########################################################################
 # Purpose: Extract OOS accuracy and other performance metrics 
 ########################################################################
+# This will create a new "Xm_GEO" dataset with a "South" dummy.
+geo_analysis <- T
+
+source("R/NS_0_labels.R")
+source("R/NS_1D_data_prep.R")
+source("R/NS_2_prep_ML.R")
+
 Xm$Liberal <- ifelse(Xm$ideo5_1==1 | Xm$ideo5_2==1, 1, 0)
 Xm$Moderate <- ifelse(Xm$ideo5_3, 1, 0)
 Xm$Conservative <- ifelse(Xm$ideo5_4==1 | Xm$ideo5_5==1, 1, 0)
@@ -98,24 +105,27 @@ NS_PERF_TIBBLE <- bind_rows(
                           test = Xm_testSet_adjusted_GEO,
                           depvar = "trump2Pvote_intent")$cf.matrix$byClass[c("Precision","Recall","F1")]),
   
-  get_trump2p(NS1D)
-  #get_trump2p(NS3E)
+  get_trump2p(NS1D),
+  get_trump2p(NS1E)
 )
 
 NS_PERF_export <- cbind(tibble(`Model and Specification` = 
                                  c("Demo. + Religion",
                                    "Demo. + South",
-                                   "Demo. + Symbolic ideology"
+                                   "Demo. + Symbolic ideology",
+                                   "Demo. + Issues"
                                  )),
                         NS_PERF_TIBBLE 
 )
 
 
-
-xtable(NS_PERF_export, digits = 3) %>%
+xtable::xtable(NS_PERF_export, digits = 3) %>%
   print(table.placement = "H", 
         include.rownames = FALSE, 
         booktabs = TRUE,
         file = here::here("tab","NS_perf_additional_specifications.tex"))
 
 knitr::kable(NS_PERF_export, digits = 2)
+
+knitr::kable(NS_PERF_export[3:4,c(1,3,2)], digits = 2)
+
