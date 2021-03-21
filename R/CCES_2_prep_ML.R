@@ -8,7 +8,7 @@ source(here::here("R", "CCES_1_data.R"))
 df_ls <- df_ls %>%
   map(
     ~ .x %>%
-      select(-matches("weight|starttime|endtime")) %>%
+      select(-contains("weight|starttime|endtime")) %>%
       ## I'll keep lookupzip
       select(
         -any_of(c(
@@ -29,6 +29,7 @@ save(df_ls, file = here("data", "cces-tidy", "cces_df_ls.RData"))
 
 # Substitute continuous variables' NA values with 0 or 50 when relevant ========
 ## Other missing dbl rows will be deleted
+
 df_ls$yr_2018 <- df_ls$yr_2018 %>%
   ## Amount contribute to all candidates/committees: has unique NA substitute
   ## + Are you the parent or guardian of any children under the age of 18?
@@ -94,6 +95,40 @@ df_ls$yr_2006 <- df_ls$yr_2006 %>%
   mutate(v4063 = ifelse(is.na(v4063), 0, v4063)) %>%
   ## cut converts numeric to factor!
   mutate_if(is.factor, as.character)
+
+# Also, create rougher factor variables for Appendix runs ======================
+for (yr in cces_years) {
+  if (yr > 2010) {
+    rvar <- "religpew"
+    svar <- "inputstate"
+    ivar <- "ideo5"
+  } else {
+    rvar <- "V219"
+    svar <- "V206"
+    ivar <- "V243"
+  }
+  df_ls[[paste0("yr_", yr)]] <- df_ls[[paste0("yr_", yr)]] %>%
+    mutate(
+      relig_appendix = case_when(
+        !!as.name(rvar) == 1 ~ 1, ## protestant
+        !!as.name(rvar) == 2 ~ 2, ## catholic
+        !!as.name(rvar) == 5 ~ 3, ## jewish
+        is.na(!!as.name(rvar)) ~ NA_real_,
+        TRUE ~ 4
+      ),
+      south_appendix = case_when(
+        !!as.name(svar) %in% (state_df %>% filter(south == 1) %>% .$stfips) ~ 1,
+        is.na(!!as.name(svar)) ~ NA_real_,
+        TRUE ~ 2
+      ),
+      ideo3_appendix = case_when(
+        !!as.name(ivar) < 3 ~ 1, ## liberal
+        !!as.name(ivar) > 3 ~ 3, ## conservative
+        is.na(!!as.name(ivar)) ~ NA_real_,
+        TRUE ~ 2
+      )
+    )
+}
 
 # Define usable continuous variables for each wave =============================
 var_db <- list(

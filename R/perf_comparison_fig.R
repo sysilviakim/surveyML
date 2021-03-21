@@ -15,7 +15,7 @@ perf <- list(
     mutate(Survey = "ANES")
 ) %>%
   bind_rows()
-assert_that(length(unique(perf$Set)) == 4)
+assert_that(length(unique(perf$Set)) == 8)
 
 # Export figures ===============================================================
 for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
@@ -24,9 +24,64 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
     width = 7, height = 4
   )
   print(
-    pdf_default(po_full(perf, metric = metric)) +
+    pdf_default(
+      po_full(perf %>% filter(Set %in% set_labels[seq(4)]), metric = metric)
+    ) +
       theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
       scale_y_continuous(limits = c(0.5, 1.0))
+  )
+  dev.off()
+}
+
+for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
+  pdf(
+    here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI.pdf")),
+    width = 7, height = 4
+  )
+  print(
+    pdf_default(
+      po_full(
+        perf %>%
+          filter(Set %in% set_labels[seq(5, 8)] & Survey == "ANES"),
+        metric = "Accuracy", ylim = c(0, 1)
+      )
+    ) +
+      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+      scale_y_continuous(limits = c(0, 1.0))
+  )
+  dev.off()
+  
+  pdf(
+    here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI_1.pdf")),
+    width = 7, height = 4
+  )
+  print(
+    pdf_default(
+      po_full(
+        perf %>%
+          filter(Set %in% set_labels[c(1, 5, 6)] & Survey == "ANES"),
+        metric = "Accuracy", ylim = c(0, 1), colour_nrow = 1
+      )
+    ) +
+      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+      scale_y_continuous(limits = c(0, 1.0))
+  )
+  dev.off()
+  
+  pdf(
+    here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI_2.pdf")),
+    width = 7, height = 4
+  )
+  print(
+    pdf_default(
+      po_full(
+        perf %>%
+          filter(Set %in% set_labels[c(2, 3, 4, 7, 8)] & Survey == "ANES"),
+        metric = "Accuracy", ylim = c(0, 1), end = 0.95
+      )
+    ) +
+      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+      scale_y_continuous(limits = c(0, 1.0))
   )
   dev.off()
 }

@@ -11,7 +11,7 @@ for (sfx in c("prezvote", "house", "senate")) {
   load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
   for (yr in as.character(anes_years)) {
     if (yr %in% names(anes_onehot)) {
-      for (varset in seq(5, 8)) {
+      for (varset in seq(8)) {
         temp <- anes_onehot[[as.character(yr)]]
         
         ## vl already loaded
@@ -24,7 +24,7 @@ for (sfx in c("prezvote", "house", "senate")) {
           temp$train <- temp$train %>% 
             select(
               ## demo. + extra for Appendix
-              contains(vl[c(1, varset)] %>% unlist() %>% paste(sep = "|"))
+              contains(vl[c(1, (varset - 1))] %>% unlist() %>% paste(sep = "|"))
             )
         }
         

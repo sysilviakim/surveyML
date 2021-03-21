@@ -7,7 +7,9 @@ source(here::here("R", "utilities.R"))
 ## See table(x$birthyr) for 2016
 
 ## File Names ==================================================================
-file_ls <- list.files(path = "data/cces", pattern = ".tab|.RData|.sav|.dta") %>%
+file_ls <- list.files(
+  path = here("data/cces"), pattern = ".tab|.RData|.sav|.dta"
+) %>%
   as.data.frame(stringsAsFactors = FALSE) %>%
   set_names(c("file_name")) %>%
   mutate(
