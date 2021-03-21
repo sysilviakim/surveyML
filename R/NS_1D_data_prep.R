@@ -161,7 +161,45 @@ Xm <- bind_cols(
   filter(complete.cases(.))
 
 
+if (exists("geo_analysis")) {
 
+# GEO ANALYSIS ONLY
+# a_release2$South <- ifelse(a_release2$state %in% 
+#                              c("LA","MS","AL","GA","SC"),1,0)
+a_release2$South <- ifelse(a_release2$state %in% 
+                           c("AL","AR","FL","GA","LA","MS",
+                             "NC","SC","TN","TX","VA"),1,0)
+a_analysis_GEO <- a_release2 %>%
+  filter(
+    date <= "2020-02-28",
+    registered == 1,
+    !is.na(trump_biden),
+    trump_biden != 999
+  ) %>% 
+  select(
+    outcome,
+    age,
+    White,
+    Men, Black, Asian,
+    Hispanic,
+    educ_category,
+    inc_group,
+    South)
+
+rm(a_release2)
+
+Xm_GEO <- bind_cols(
+  a_analysis_GEO %>% 
+    select(-trump2Pvote_intent, -age) %>%
+    mutate_all(as.factor) %>%
+    dummy_cols(remove_selected_columns = TRUE),
+  a_analysis_GEO %>% 
+    select(trump2Pvote_intent, age) %>%
+    mutate(trump2Pvote_intent = factor(trump2Pvote_intent))
+) %>%
+  filter(complete.cases(.))
+
+}
 
 # # Before Oct. 2020, JZ created factors using the code below:
 # names(a_analysis)
