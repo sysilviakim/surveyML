@@ -19,7 +19,7 @@ for (sfx in c("prezvote", "house", "senate")) {
 
     ## caret results
     for (method in c("logit", "cart", "rf")) {
-      for (varset in seq(4)) {
+      for (varset in seq(8)) {
         ## Load previously run results
         load(
           here(
