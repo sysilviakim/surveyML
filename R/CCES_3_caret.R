@@ -66,7 +66,7 @@ for (yr in rev(cces_years)) {
       } else if (varset > 4) {
         temp$train <- temp$train %>% 
           select(
-            contains(vl[c(1, varset)] %>% unlist() %>% paste(sep = "|"))
+            contains(vl[c(1, (varset - 1))] %>% unlist() %>% paste(sep = "|"))
           ) %>%
           select(-contains("multrace"))
       }

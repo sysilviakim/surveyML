@@ -24,7 +24,7 @@ for (sfx in c("prezvote", "house", "senate")) {
           temp$train <- temp$train %>% 
             select(
               ## demo. + extra for Appendix
-              contains(vl[c(1, varset)] %>% unlist() %>% paste(sep = "|"))
+              contains(vl[c(1, (varset - 1))] %>% unlist() %>% paste(sep = "|"))
             )
         }
         
