@@ -803,7 +803,9 @@ options(
 )
 
 set_labels <- c(
-  "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates"
+  "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates",
+  ## Appendix requested
+  paste0("Demo. + ", c("Religion", "Geographics", "Ideology", "Issues"))
 )
 anes_years <- seq(1952, 2016, by = 4)
 cces_years <- seq(2008, 2018, by = 2)

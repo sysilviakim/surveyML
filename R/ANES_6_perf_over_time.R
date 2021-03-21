@@ -6,12 +6,12 @@ load(here("output/ANES/ANES_varimp.RData"))
 cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   map(
     ~ {
-      summ_df <- seq(4) %>%
+      summ_df <- seq(8) %>%
         map(
           function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years)
         ) %>%
         bind_rows(.id = "Set") %>%
-        mutate(Set = factor(Set, levels = seq(4), labels = set_labels))
+        mutate(Set = factor(Set, levels = seq(8), labels = set_labels))
 
       save(
         summ_df,
@@ -24,7 +24,7 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   )
 
 # SI figures ===================================================================
-cross2(c("prezvote", "house", "senate"), seq(4)) %>%
+cross2(c("prezvote", "house", "senate"), seq(8)) %>%
   map(setNames, c("yvar", "set")) %>%
   map(
     function(x) {
