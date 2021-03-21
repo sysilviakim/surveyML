@@ -17,6 +17,7 @@ tab/old/*
 *varlogit*
 fig/Nationscape/*
 output/*
-*.pdf
+writeup/*.pdf
+doc/*.pdf
 fig/*.mp4
 
