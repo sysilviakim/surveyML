@@ -27,3 +27,5 @@ ggsave("fig/Accuracy_1952_2020.pdf")
 
 summary(lm(L$accuracy ~ L$year))
 summary(lm(L$auc ~ L$year))
+
+mean(L$accuracy)
