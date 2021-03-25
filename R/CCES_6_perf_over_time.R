@@ -67,7 +67,7 @@ summ_df <- summ_df %>%
   mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
   arrange(desc(Year), Set)
 
-save(summ_df, file = here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda"))
+save(summ_df, file = here("output/perf_summ_CCES_Nationscape.Rda"))
 
 # SI figures ===================================================================
 cross2(c(preschoice = 1, house = 3, senate = 4), seq(4)) %>%

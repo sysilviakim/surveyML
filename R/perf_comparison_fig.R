@@ -9,9 +9,9 @@ raw_list <- list(
 )
 
 perf <- list(
-  CCNS = loadRData(here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda")) %>%
+  CCNS = loadRData(here("output/perf_summ_CCES_Nationscape.Rda")) %>%
     mutate(Survey = "CCES/NS"),
-  ANES = loadRData(here("data/anes-tidy/perf_summ_ANES_prezvote_rf.Rda")) %>%
+  ANES = loadRData(here("output/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
   bind_rows() %>%
@@ -54,7 +54,7 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
     here("fig", paste0("survey_rf_", tolower(metric), "_ts_extra.pdf")),
     width = width, height = height
   )
-  print(plot_temp(sets = c(1, 2, 7)))
+  print(plot_temp(sets = c(2, 7, 8)))
   dev.off()
   
   pdf(
