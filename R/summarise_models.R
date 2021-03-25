@@ -3,6 +3,7 @@
 library(tidyverse)
 library(here)
 
+
 # Read in ANES + NS up to 2020:
 L <- read_csv(here("tab","anes_logit_spec1.csv"))
 
@@ -68,3 +69,40 @@ summary(lm(P$auc ~ P$year))
 # slope: 0.0018935, p<.01
 summary(lm(auc ~ year, data = P %>% filter(year>=1964)))
 # slope: 0.0010, p=.131
+
+#########################
+# CALCULATE PRE OVER TIME
+#########################
+
+# Percent reduction in error (PRE) is:
+#   
+#   PRE = (PCP - PMC) / (1 - PMC)
+# 
+# Where:
+# 
+# PCP = % correctly predicted = Accuracy.
+# 
+# PMC = % in the modal category
+
+P <- read_csv(here("tab","anes_logit_spec1_pooled.csv"))
+EL <- read_csv(here::here("tab","elections","presidential_elections.csv"))
+EL$dem2P <- EL$dem_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
+EL$rep2P <- EL$rep_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
+EL$Winner_2P <- ifelse(EL$dem2P > EL$rep2P, EL$dem2P, EL$rep2P)
+
+M <- left_join(P,EL)
+
+M <- M %>% mutate(PRE = 
+                    (accuracy - Winner_2P) / (1 - Winner_2P)
+                  )
+M %>% 
+  ggplot(aes(x=year, y=PRE, color = poll)) +
+  geom_point(size=2) +
+  geom_line() +
+  theme_bw() +
+  labs(y="", x="",
+       subtitle = "Percent reduction in error relative to guessing the modal (most popular) candidate\nin logit models based on demographics",
+       color = "") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(text = element_text(size = 16))
+ggsave("fig/PRE_1952_2020_pooled.pdf")
