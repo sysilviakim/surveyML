@@ -1,10 +1,10 @@
 source(here::here("R", "utilities.R"))
-source(here("R", "NS_extract_performance.R"))
+source(here("R", "NS_5_extract_performance.R"))
 load(here("output/CCES/CCES_perf.RData"))
 load(here("output/CCES/CCES_varimp.RData"))
 
 # CCES performance into a table (pres vote choice, 2008-2018) ==================
-summ_df <- seq(4) %>%
+summ_df <- seq(8) %>%
   map(
     ~ perf_summ(
       within(perf, rm("year2006")), 1, "rf", .x,
@@ -15,7 +15,7 @@ summ_df <- seq(4) %>%
 
 # Append NS outputs (pres vote choice, 2020) per Jan's code source outputs =====
 set.seed(123)
-NS_auc_range <- seq(4) %>%
+NS_auc_range <- seq(8) %>%
   map(
     ~ predict(
       eval(parse(text = paste0("NS", .x)))$finalModel,
@@ -35,7 +35,7 @@ summ_df <- summ_df %>%
   bind_rows(
     .,
     data.frame(
-      Set = as.character(seq(4)),
+      Set = as.character(seq(8)),
       Year = 2020,
       AUC = AUC_Nationscape,
       AUC_lower = NS_auc_range %>% map(1) %>% unlist(),
@@ -64,7 +64,7 @@ summ_df <- summ_df %>%
       stringsAsFactors = FALSE
     )
   ) %>%
-  mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+  mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
   arrange(desc(Year), Set)
 
 save(summ_df, file = here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda"))
