@@ -134,9 +134,9 @@ NS_perf_RF <- NS_PERF_export[1:4,]
 NS_perf_CART <- NS_PERF_export[5:8,]
 NS_perf_Logit <- NS_PERF_export[9:12,]
 
-saveRDS(NS_perf_RF,here::here("tab","NS_perf_RF.RDS"))
-saveRDS(NS_perf_CART,here::here("tab","NS_perf_CART.RDS"))
-saveRDS(NS_perf_Logit,here::here("tab","NS_perf_Logit.RDS"))
+saveRDS(NS_perf_RF,here::here("output","NS_perf_RF.RDS"))
+saveRDS(NS_perf_CART,here::here("output","NS_perf_CART.RDS"))
+saveRDS(NS_perf_Logit,here::here("output","NS_perf_Logit.RDS"))
 
 xtable(NS_PERF_export, digits = 3) %>%
         print(table.placement = "H", 

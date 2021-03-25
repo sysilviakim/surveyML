@@ -118,6 +118,8 @@ NS_PERF_export <- cbind(tibble(`Model and Specification` =
                         NS_PERF_TIBBLE 
 )
 
+saveRDS(NS_PERF_export,here::here("output","NS_perf_RF_additional.RDS"))
+
 
 xtable::xtable(NS_PERF_export, digits = 3) %>%
   print(table.placement = "H", 
