@@ -6,7 +6,7 @@ load(here("data", "variable_labels.Rda"))
 perf <- list()
 vid <- list()
 
-for (yr in rev(seq(2006, 2018, 2))) {
+for (yr in rev(cces_years)) {
   for (i in seq(length(file_suffix[[paste0("year", yr)]]))) {
     sfx <- file_suffix[[paste0("year", yr)]][i]
     load(
@@ -15,7 +15,7 @@ for (yr in rev(seq(2006, 2018, 2))) {
 
     ## caret results
     for (method in c("logit", "cart", "rf")) {
-      for (varset in seq(4)) {
+      for (varset in seq(8)) {
 
         ## Load previously run results
         load(
@@ -77,13 +77,13 @@ setNames(seq(4), c(1, 2, "house", "senate")) %>%
   imap(
     ~ {
       for (method in c("logit", "cart", "rf")) {
-        tab <- seq(4) %>%
-          map(
-            function(x) perf_summ(perf, ifelse(.x < 3, .x, .y), method, x)
+        tab <- seq(8) %>%
+          map_dfr(
+            function(x) perf_summ(perf, ifelse(.x < 3, .x, .y), method, x),
+            .id = "Set"
           ) %>%
-          bind_rows(.id = "Set") %>%
           arrange(desc(Year), Set) %>%
-          mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+          mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
           rename(`Variable Specification` = Set)
 
         # No pres. choice for 2006 wave

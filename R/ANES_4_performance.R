@@ -64,18 +64,18 @@ for (sfx in c("prezvote", "house", "senate")) {
 
 # xtable export ================================================================
 load(here("output/ANES/ANES_perf.RData"))
-load(here("output/CCES/CCES_varimp.RData"))
+load(here("output/ANES/ANES_varimp.RData"))
 
 cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   map(
     ~ {
-      tab <- seq(4) %>%
+      tab <- seq(8) %>%
         map(
           function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years)
         ) %>%
         bind_rows(.id = "Set") %>%
         arrange(desc(Year), Set) %>%
-        mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+        mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
         rename(`Variable Specification` = Set) %>%
         select(-AUC_lower, -AUC_upper, -Accuracy_lower, -Accuracy_upper) %>%
         xtable(
@@ -113,7 +113,7 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
 for (sfx in c("prezvote", "house", "senate")) {
   tab <- c("logit", "cart", "rf") %>%
     map(
-      ~ seq(4) %>%
+      ~ seq(8) %>%
         map_dfr(
           function(x) {
             perf_summ(perf, sfx, .x, x, yr = anes_years) %>%
@@ -123,7 +123,7 @@ for (sfx in c("prezvote", "house", "senate")) {
         ) %>%
         select(Set, everything()) %>%
         arrange(desc(Year), Set) %>%
-        mutate(Set = factor(Set, levels = seq(4), labels = set_labels)) %>%
+        mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
         rename(`Variable Specification` = Set)
     ) %>%
     Reduce(left_join, .) %>%

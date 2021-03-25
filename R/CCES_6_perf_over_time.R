@@ -8,7 +8,7 @@ summ_df <- seq(4) %>%
   map(
     ~ perf_summ(
       within(perf, rm("year2006")), 1, "rf", .x,
-      yr = rev(seq(2008, 2018, 2))
+      yr = rev(cces_years)
     )
   ) %>%
   bind_rows(.id = "Set")
@@ -68,7 +68,6 @@ summ_df <- summ_df %>%
   arrange(desc(Year), Set)
 
 save(summ_df, file = here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda"))
-
 
 # SI figures ===================================================================
 cross2(c(preschoice = 1, house = 3, senate = 4), seq(4)) %>%
