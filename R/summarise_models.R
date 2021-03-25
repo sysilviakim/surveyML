@@ -38,9 +38,20 @@ mean(L$accuracy)
 ################
 P <- read_csv(here("tab","anes_logit_spec1_pooled.csv"))
 
+P %>% pivot_longer(cols=3:4) %>%
+  ggplot(aes(x=year, y=value, color = poll)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(~name) +
+  ylim(c(.5,.9)) +
+  theme_bw() +
+  labs(y="Performance", x="",
+       title = "Accuracy from logit models based on demographics",
+       color = "") 
+
 P %>% 
   ggplot(aes(x=year, y=accuracy, color = poll)) +
-  geom_point() +
+  geom_point(size=2) +
   geom_line() +
   ylim(c(.5,.9)) +
   theme_bw() +
@@ -51,4 +62,9 @@ P %>%
 ggsave("fig/Accuracy_1952_2020_pooled.pdf")
   
 summary(lm(P$accuracy ~ P$year))
-# P-val: 0.106
+# P-val: 0.101
+
+summary(lm(P$auc ~ P$year))
+# slope: 0.0018935, p<.01
+summary(lm(auc ~ year, data = P %>% filter(year>=1964)))
+# slope: 0.0010, p=.131
