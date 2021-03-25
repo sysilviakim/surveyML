@@ -9,9 +9,9 @@ raw_list <- list(
 )
 
 perf <- list(
-  CCNS = loadRData(here("output/perf_summ_CCES_Nationscape.Rda")) %>%
+  CCNS = loadRData(here("output/CCES/perf_summ_CCES_Nationscape.Rda")) %>%
     mutate(Survey = "CCES/NS"),
-  ANES = loadRData(here("output/perf_summ_ANES_prezvote_rf.Rda")) %>%
+  ANES = loadRData(here("output/ANES/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
   bind_rows() %>%
