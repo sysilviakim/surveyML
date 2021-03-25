@@ -277,10 +277,10 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
       map(~ .x$cf.matrix$overall) %>%
       map(
         ~ paste0(
-          "[",  
+          "[",
           str_pad(round(.x[["AccuracyLower"]], digits = 4), 6, "right", "0"),
-          ", ", 
-          str_pad(round(.x[["AccuracyUpper"]], digits = 4), 6, "right", "0"), 
+          ", ",
+          str_pad(round(.x[["AccuracyUpper"]], digits = 4), 6, "right", "0"),
           "]"
         )
       ) %>%
@@ -363,34 +363,42 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 }
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
-                    colour_nrow = 2, linetype_nrow = 2, end = 0.85) {
+                    colour_nrow = 2, linetype_nrow = 2, end = 0.85, vdir = -1) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
-      x, aes(x = Year, y = !!as.name(metric), colour = Set, linetype = Survey)
+      x,
+      aes(
+        x = Year, y = !!as.name(metric),
+        colour = Set, linetype = Survey, shape = Set
+      )
     )
   } else {
     p <- ggplot(
-      x, aes(x = Year, y = !!as.name(metric), colour = Set)
+      x, aes(x = Year, y = !!as.name(metric), colour = Set, shape = Set)
     )
   }
-  
+
   p <- p +
-    geom_line(size = 1) +
+    geom_line(size = 1) + 
+    geom_point(aes(shape = Set)) +
+    scale_shape_discrete(name = "Specification") +
     scale_x_continuous(breaks = anes_years) +
-    scale_color_viridis_d(
-      direction = -1, name = "Specification", end = end
-    ) + 
-    guides(colour = guide_legend(nrow = colour_nrow, byrow = TRUE))
-  
+    scale_color_viridis_d(direction = vdir, name = "Specification", end = end) +
+    guides(
+      colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
+      shape = guide_legend(nrow = colour_nrow, byrow = TRUE)
+    )
+
   if (length(unique(x$Survey)) > 1) {
     p <- p +
       scale_linetype_manual(name = "Survey", values = c("solid", "dashed")) +
       guides(
         colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
+        shape = guide_legend(nrow = colour_nrow, byrow = TRUE),
         linetype = guide_legend(nrow = linetype_nrow, byrow = TRUE)
       )
   }
-  
+
   p <- p +
     scale_y_continuous(limits = ylim)
   return(p)
@@ -763,32 +771,34 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
                            position = c(0.8, 0.2)) {
   temp <- levels %>%
     map_dfr(
-      function(x, y) perf %>%
-        imap(yvar) %>%
-        imap(x) %>%
-        imap(set) %>%
-        imap(~ .x$perf) %>%
-        imap_dfr(
-          ~ tibble(method = x, x = .x@x.values[[1]], y = .x@y.values[[1]]),
-          .id = "year"
-        ) %>%
-        mutate(yvar = yvar)
+      function(x, y) {
+        perf %>%
+          imap(yvar) %>%
+          imap(x) %>%
+          imap(set) %>%
+          imap(~ .x$perf) %>%
+          imap_dfr(
+            ~ tibble(method = x, x = .x@x.values[[1]], y = .x@y.values[[1]]),
+            .id = "year"
+          ) %>%
+          mutate(yvar = yvar)
+      }
     ) %>%
     mutate(method = factor(method, levels = levels, labels = labels))
-  
+
   p <- unique(temp$year) %>%
     set_names(., .) %>%
     imap(
       ~ ggplot(
-          temp %>% filter(year == .x),
-          aes(x = x, y = y, colour = method, linetype = method)
-        ) +
-        geom_line(size = size) + 
+        temp %>% filter(year == .x),
+        aes(x = x, y = y, colour = method, linetype = method)
+      ) +
+        geom_line(size = size) +
         scale_color_viridis_d(direction = -1, end = 0.9) +
         scale_linetype_manual(values = linetype) +
         xlab("False Positive Rate") +
         ylab("True Positive Rate") +
-        theme(legend.position = position) + 
+        theme(legend.position = position) +
         labs(colour = "Method", linetype = "Method")
     )
   return(p)

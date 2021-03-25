@@ -14,46 +14,52 @@ perf <- list(
   ANES = loadRData(here("data/anes-tidy/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
-  bind_rows()
+  bind_rows() %>%
+  mutate(Set = fct_relevel(Set, set_labels[c(1, 2, 7, 3, 4, 5, 6, 8)])) %>%
+  # ANES does not have 3-pt self-identification of ideology until 1972
+  filter(!(Set == "Demo. + Ideology" & Year < 1972 & Survey == "ANES"))
 assert_that(length(unique(perf$Set)) == 8)
+
+# Settings =====================================================================
+width <- 7
+height <- 4
+plot_temp <- function(sets = seq(4), end = .85) {
+  p <- pdf_default(
+    po_full(
+      perf %>% filter(Set %in% set_labels[sets]),
+      metric = metric, vdir = 1, end = end
+    )
+  ) +
+    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+    scale_y_continuous(limits = c(0.5, 1))
+  if (metric != "Accuracy" & metric != "AUC") {
+    p <- p + scale_y_continuous(limits = c(0, 1))
+  }
+  return(p)
+}
 
 # Export figures ===============================================================
 for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   pdf(
     here("fig", paste0("survey_rf_", tolower(metric), "_ts.pdf")),
-    width = 7, height = 4
+    width = width, height = height
   )
-  print(
-    pdf_default(
-      po_full(perf %>% filter(Set %in% set_labels[seq(4)]), metric = metric)
-    ) +
-      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-      scale_y_continuous(limits = c(0.5, 1.0))
-  )
+  print(plot_temp())
   dev.off()
 }
 
+# Ideology + SI figures
 for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   pdf(
-    here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI.pdf")),
-    width = 7, height = 4
+    here("fig", paste0("survey_rf_", tolower(metric), "_ts_extra.pdf")),
+    width = width, height = height
   )
-  print(
-    pdf_default(
-      po_full(
-        perf %>%
-          filter(Set %in% set_labels[seq(5, 8)] & Survey == "ANES"),
-        metric = "Accuracy", ylim = c(0, 1)
-      )
-    ) +
-      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-      scale_y_continuous(limits = c(0, 1.0))
-  )
+  print(plot_temp(sets = c(1, 2, 7)))
   dev.off()
   
   pdf(
     here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI_1.pdf")),
-    width = 7, height = 4
+    width = 7, height = height
   )
   print(
     pdf_default(
@@ -61,23 +67,6 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
         perf %>%
           filter(Set %in% set_labels[c(1, 5, 6)] & Survey == "ANES"),
         metric = "Accuracy", ylim = c(0, 1), colour_nrow = 1
-      )
-    ) +
-      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-      scale_y_continuous(limits = c(0, 1.0))
-  )
-  dev.off()
-  
-  pdf(
-    here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI_2.pdf")),
-    width = 7, height = 4
-  )
-  print(
-    pdf_default(
-      po_full(
-        perf %>%
-          filter(Set %in% set_labels[c(2, 3, 4, 7, 8)] & Survey == "ANES"),
-        metric = "Accuracy", ylim = c(0, 1), end = 0.95
       )
     ) +
       theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
@@ -98,12 +87,12 @@ temp <- perf %>%
   )
 
 levels(perf$Set) %>%
-  set_names(., nm = paste0("spec", seq(4))) %>%
+  set_names(., nm = paste0("spec", seq(8))) %>%
   map(
     ~ temp %>%
       filter(Set == .x) %>%
       select(Year, Accuracy_lower, Accuracy_upper, Accuracy, Survey) %>%
-      ggplot(aes(x = Year, y = Accuracy, color = Survey)) +
+      ggplot(aes(x = Year, y = Accuracy, color = Survey, shape = Survey)) +
       geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper)) +
       scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
       scale_y_continuous(limits = c(0.45, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
@@ -113,7 +102,7 @@ levels(perf$Set) %>%
     ~ {
       pdf(
         here(paste0("fig/survey_rf_accrange_ts_", .y, ".pdf")),
-        width = 7, height = 4
+        width = 7, height = height
       )
       print(pdf_default(.x))
       dev.off()
@@ -122,12 +111,12 @@ levels(perf$Set) %>%
 
 ## Similarly, AUC Ranges =======================================================
 levels(perf$Set) %>%
-  set_names(., nm = paste0("spec", seq(4))) %>%
+  set_names(., nm = paste0("spec", seq(8))) %>%
   map(
     ~ temp %>%
       filter(Set == .x) %>%
       select(Year, AUC_lower, AUC_upper, AUC, Survey) %>%
-      ggplot(aes(x = Year, y = AUC, color = Survey)) +
+      ggplot(aes(x = Year, y = AUC, color = Survey, shape = Survey)) +
       geom_pointrange(aes(ymin = AUC_lower, ymax = AUC_upper)) +
       scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
       scale_y_continuous(limits = c(0.4, 1.0), breaks = seq(0.4, 1.0, 0.1)) +
@@ -137,7 +126,7 @@ levels(perf$Set) %>%
     ~ {
       pdf(
         here(paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf")),
-        width = 7, height = 4
+        width = 7, height = height
       )
       print(pdf_default(.x))
       dev.off()
