@@ -1,3 +1,6 @@
+source("R/NS_0_labels.R")
+source("R/NS_1D_data_prep.R")
+source("R/NS_2_prep_ML.R")
 ########################################################################
 # Purpose: Extract OOS accuracy and other performance metrics 
 ########################################################################
@@ -126,11 +129,22 @@ NS_PERF_export <- cbind(tibble(`Model and Specification` =
                           NS_PERF_TIBBLE 
 )
 
+
+NS_perf_RF <- NS_PERF_export[1:4,]
+NS_perf_CART <- NS_PERF_export[5:8,]
+NS_perf_Logit <- NS_PERF_export[9:12,]
+
+saveRDS(NS_perf_RF,here::here("tab","NS_perf_RF.RDS"))
+saveRDS(NS_perf_CART,here::here("tab","NS_perf_CART.RDS"))
+saveRDS(NS_perf_Logit,here::here("tab","NS_perf_Logit.RDS"))
+
 xtable(NS_PERF_export, digits = 3) %>%
         print(table.placement = "H", 
               include.rownames = FALSE, 
               booktabs = TRUE,
               file = here::here("tab","NS_perf_all.tex"))
+
+
 
 
 library(vip)
