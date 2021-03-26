@@ -770,7 +770,7 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
                            size = 0.7,
                            position = c(0.8, 0.2)) {
   temp <- levels %>%
-    map_dfr(
+    imap_dfr(
       function(x, y) {
         perf %>%
           imap(yvar) %>%
