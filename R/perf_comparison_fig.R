@@ -21,16 +21,16 @@ perf <- list(
 assert_that(length(unique(perf$Set)) == 8)
 
 # Settings =====================================================================
-width <- 7
+width <- 6.2
 height <- 4
-plot_temp <- function(sets = seq(4), end = .85) {
+plot_temp <- function(sets = seq(4), ...) {
   p <- pdf_default(
     po_full(
       perf %>% filter(Set %in% set_labels[sets]),
-      metric = metric, vdir = 1, end = end
+      metric = metric, vdir = 1, ...
     )
   ) +
-    theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
+    theme(legend.position = "bottom", legend.key.width = unit(.9, "cm")) +
     scale_y_continuous(limits = c(0.5, 1))
   if (metric != "Accuracy" & metric != "AUC") {
     p <- p + scale_y_continuous(limits = c(0, 1))
@@ -48,29 +48,43 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   dev.off()
 }
 
-# Ideology + SI figures
+# Ideology + SI figures ========================================================
 for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   pdf(
     here("fig", paste0("survey_rf_", tolower(metric), "_ts_extra.pdf")),
-    width = width, height = height
+    width = width, height = (height + 0.5)
   )
-  print(plot_temp(sets = c(2, 7, 8)))
+  print(
+    # https://www.datanovia.com/en/blog/the-a-z-of-rcolorbrewer-palette/
+    plot_temp(sets = c(2, 7, 8), colour_nrow = 3, end = 1) +
+      scale_colour_manual(
+        values = c(
+          # Force as the third scale in the default figure
+          viridisLite::viridis(4, end = .9)[2],
+          viridisLite::viridis(9, end = .9)[7],
+          viridisLite::viridis(9, end = 1)[9]
+        ), 
+        name = "Specification"
+      )
+  )
   dev.off()
   
   pdf(
     here("fig", paste0("survey_rf_", tolower(metric), "_ts_SI_1.pdf")),
-    width = 7, height = height
+    width = width, height = height
   )
   print(
-    pdf_default(
-      po_full(
-        perf %>%
-          filter(Set %in% set_labels[c(1, 5, 6)] & Survey == "ANES"),
-        metric = "Accuracy", ylim = c(0, 1), colour_nrow = 1
+    plot_temp(sets = c(1, 5, 6), colour_nrow = 3, end = 1) +
+      scale_colour_manual(
+        values = c(
+          # Force as the third scale in the default figure
+          viridisLite::viridis(9, end = 1)[1],
+          viridisLite::viridis(9, end = 1)[8],
+          viridisLite::viridis(9, end = 1)[5]
+        ), 
+        name = "Specification"
       )
-    ) +
-      theme(legend.position = "bottom", legend.key.width = unit(1, "cm")) +
-      scale_y_continuous(limits = c(0, 1.0))
+    
   )
   dev.off()
 }
@@ -86,7 +100,7 @@ temp <- perf %>%
     )
   )
 
-levels(perf$Set) %>%
+levels(temp$Set) %>%
   set_names(., nm = paste0("spec", seq(8))) %>%
   map(
     ~ temp %>%
@@ -94,7 +108,7 @@ levels(perf$Set) %>%
       select(Year, Accuracy_lower, Accuracy_upper, Accuracy, Survey) %>%
       ggplot(aes(x = Year, y = Accuracy, color = Survey, shape = Survey)) +
       geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper)) +
-      scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
+      scale_x_continuous(breaks = c(anes_years, 2020)) +
       scale_y_continuous(limits = c(0.45, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
       scale_color_viridis_d(end = 0.85)
   ) %>%
@@ -118,7 +132,7 @@ levels(perf$Set) %>%
       select(Year, AUC_lower, AUC_upper, AUC, Survey) %>%
       ggplot(aes(x = Year, y = AUC, color = Survey, shape = Survey)) +
       geom_pointrange(aes(ymin = AUC_lower, ymax = AUC_upper)) +
-      scale_x_continuous(breaks = seq(1952, 2020, by = 4)) +
+      scale_x_continuous(breaks = c(anes_years, 2020)) +
       scale_y_continuous(limits = c(0.4, 1.0), breaks = seq(0.4, 1.0, 0.1)) +
       scale_color_viridis_d(end = 0.85)
   ) %>%
@@ -126,7 +140,7 @@ levels(perf$Set) %>%
     ~ {
       pdf(
         here(paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf")),
-        width = 7, height = height
+        width = width, height = height
       )
       print(pdf_default(.x))
       dev.off()
