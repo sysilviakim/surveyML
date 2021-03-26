@@ -122,27 +122,3 @@ levels(temp$Set) %>%
       dev.off()
     }
   )
-
-## Similarly, AUC Ranges =======================================================
-levels(perf$Set) %>%
-  set_names(., nm = paste0("spec", seq(8))) %>%
-  map(
-    ~ temp %>%
-      filter(Set == .x) %>%
-      select(Year, AUC_lower, AUC_upper, AUC, Survey) %>%
-      ggplot(aes(x = Year, y = AUC, color = Survey, shape = Survey)) +
-      geom_pointrange(aes(ymin = AUC_lower, ymax = AUC_upper)) +
-      scale_x_continuous(breaks = c(anes_years, 2020)) +
-      scale_y_continuous(limits = c(0.4, 1.0), breaks = seq(0.4, 1.0, 0.1)) +
-      scale_color_viridis_d(end = 0.85)
-  ) %>%
-  imap(
-    ~ {
-      pdf(
-        here(paste0("fig/survey_rf_aucrange_ts_", .y, ".pdf")),
-        width = width, height = height
-      )
-      print(pdf_default(.x))
-      dev.off()
-    }
-  )
