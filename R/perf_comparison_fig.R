@@ -116,9 +116,26 @@ levels(temp$Set) %>%
     ~ {
       pdf(
         here(paste0("fig/survey_rf_accrange_ts_", .y, ".pdf")),
-        width = 7, height = height
+        width = 6.8, height = height
       )
       print(pdf_default(.x))
       dev.off()
     }
   )
+
+p <- temp %>%
+  filter(Set %in% levels(Set)[c(2, 3, 8)]) %>%
+  select(Year, Accuracy_lower, Accuracy_upper, Accuracy, Survey, Set) %>%
+  ggplot(
+    aes(x = Year, y = Accuracy, color = Set, shape = Survey, linetype = Survey)
+  ) +
+  geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper)) +
+  geom_line(aes(x = Year, y = Accuracy)) + 
+  scale_x_continuous(breaks = c(anes_years, 2020)) +
+  scale_y_continuous(limits = c(0.45, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
+  scale_color_viridis_d(end = 0.85, name = "Set")
+print(
+  pdf_default(p) +
+    theme(legend.position = "bottom", legend.key.width = unit(.9, "cm")) +
+    scale_y_continuous(limits = c(0.5, 1))
+)
