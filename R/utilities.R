@@ -363,7 +363,7 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 }
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
-                    colour_nrow = 2, linetype_nrow = 2, end = 0.85, vdir = -1) {
+                    colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,
@@ -382,7 +382,7 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
     geom_line(size = 1) + 
     geom_point(aes(shape = Set)) +
     scale_shape_discrete(name = "Specification") +
-    scale_x_continuous(breaks = anes_years) +
+    scale_x_continuous(breaks = c(anes_years, 2020)) +
     scale_color_viridis_d(direction = vdir, name = "Specification", end = end) +
     guides(
       colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
@@ -770,7 +770,7 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
                            size = 0.7,
                            position = c(0.8, 0.2)) {
   temp <- levels %>%
-    map_dfr(
+    imap_dfr(
       function(x, y) {
         perf %>%
           imap(yvar) %>%
