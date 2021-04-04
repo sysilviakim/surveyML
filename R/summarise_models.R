@@ -37,7 +37,7 @@ mean(L$accuracy)
 ################
 # A POOLED MODEL
 ################
-P <- read_csv(here("tab","anes_logit_spec1_pooled.csv"))
+P <- read_csv(here("tab","logit_spec1_pooled.csv"))
 
 P %>% pivot_longer(cols=3:4) %>%
   ggplot(aes(x=year, y=value, color = poll)) +
@@ -70,9 +70,9 @@ summary(lm(P$auc ~ P$year))
 summary(lm(auc ~ year, data = P %>% filter(year>=1964)))
 # slope: 0.0010, p=.131
 
-#########################
-# CALCULATE PRE OVER TIME
-#########################
+##################################################
+# CALCULATE PRE OVER TIME: Logit
+##################################################
 
 # Percent reduction in error (PRE) is:
 #   
@@ -84,7 +84,7 @@ summary(lm(auc ~ year, data = P %>% filter(year>=1964)))
 # 
 # PMC = % in the modal category
 
-P <- read_csv(here("tab","anes_logit_spec1_pooled.csv"))
+P <- read_csv(here("tab","logit_spec1_pooled.csv"))
 EL <- read_csv(here::here("tab","elections","presidential_elections.csv"))
 EL$dem2P <- EL$dem_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
 EL$rep2P <- EL$rep_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
@@ -106,3 +106,59 @@ M %>%
   scale_y_continuous(labels = scales::percent) +
   theme(text = element_text(size = 16))
 ggsave("fig/PRE_1952_2020_pooled.pdf")
+
+
+
+##################################################
+# CALCULATE PRE OVER TIME: RF
+##################################################
+library(jcolors)
+
+R <- read_csv(here("tab","RF_spec1_pooled.csv"))
+EL <- read_csv(here::here("tab","elections","presidential_elections.csv"))
+EL$dem2P <- EL$dem_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
+EL$rep2P <- EL$rep_vote_share_Leip / (EL$dem_vote_share_Leip + EL$rep_vote_share_Leip)
+EL$Winner_2P <- ifelse(EL$dem2P > EL$rep2P, EL$dem2P, EL$rep2P)
+
+R <- left_join(R,EL)
+
+R <- R %>% mutate(PRE = 
+                    (accuracy - Winner_2P) / (1 - Winner_2P),
+                  Relative_Improvement = accuracy - Winner_2P
+)
+
+R %>% 
+  ggplot(aes(x=year, y=PRE, color = poll)) +
+  geom_point(size=2) +
+  geom_line() +
+  theme_bw() +
+  labs(y="", x="",
+       subtitle = "Percent reduction in error relative to guessing the modal (most popular) candidate\nin RF models based on demographics",
+       color = "") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(text = element_text(size = 16)) +
+  scale_color_jcolors()
+ggsave("fig/RF_PRE_1952_2020_pooled.pdf")
+
+R %>% 
+  ggplot(aes(x=year, y=Relative_Improvement*100, color = poll)) +
+  geom_point(size=2) +
+  geom_line() +
+  theme_bw() +
+  labs(y="Percentage points above the modal category", x="",
+       subtitle = "Accuracy improvement from using demographic data\n(relative to a naive guess)",
+       color = "") +
+  ylim(c(0,20)) +
+  theme(text = element_text(size = 15)) +
+  scale_color_jcolors()
+ggsave("fig/RF_PercentagePointAccuracyIncrease_1952_2020_pooled.pdf")
+
+
+R %>% select(year,poll,Winner_2P, Relative_Improvement) %>%
+  pivot_longer(cols = 3:4) %>%
+  ggplot(aes(x=year, y=value)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(~name, scales = "free")
+  theme_bw()
+
