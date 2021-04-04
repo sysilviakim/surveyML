@@ -10,12 +10,37 @@ The dataset comprises of three national surveys:
 * Cooperative Congressional Election Study ([CCES](https://cces.gov.harvard.edu))
 * [Nationscape](https://www.voterstudygroup.org/publication/nationscape-data-set)
 
+## Feature sets: ANES
+
+* Specification 1: Demographics: age, gender, race, income, and education.
+* Specification 2: S1 + 7 Party ID indicators.
+* Specification 3: S2 + Issues.
+* Specification 4: S3 + Remaining information.
+
+*Specification 3* consists of questions salient for particular elections (e.g. the Iraq war in 2000s, health care in 2010s) as well as standard issues that have been asked consistently. The latter set includes self-placement on federal spending on: 
+
+* Poor/Poor People
+* Child Care
+* Aids Research/Fight Aids
+* Public Schools
+* Fin Aid for College Students
+* The Homeless
+* Welfare Programs
+* Food Stamps
+* Improve/Protect Environment
+* Social Security
+* Assistance to Blacks
+
+## Feature sets: CCES
+
+We again follow the same approach, but of course the set of issue questions is different.
+
 ## Feature sets: Nationscape
 
 * Specification 1: **Demographics**. Categorical variables for: gender, ethnicity (4 categories), income (5 categories), and education (4 categories). Age is included as a continuous variable.
 * Specification 2: S1 + 7 Party ID indicators.
-* Specification 3: S2 + Issues (see the list below)
-* Specification 4: S3 + Remaining information
+* Specification 3: S2 + Issues (see the list below).
+* Specification 4: S3 + Remaining information.
 
 ### Specification 3 details
 
