@@ -12,7 +12,7 @@ The dataset comprises of three national surveys:
 
 ## Feature sets: Nationscape
 
-* Specification 1: **Demographics*. Categorical variables for: gender, ethnicity (4 categories), income (5 categories), and education (4 categories). Age as continuous variable is also included.
+* Specification 1: **Demographics**. Categorical variables for: gender, ethnicity (4 categories), income (5 categories), and education (4 categories). Age is included as a continuous variable.
 * Specification 2: S1 + 7 Party ID indicators.
 * Specification 3: S2 + Issues (see the list below)
 * Specification 4: S3 + Remaining information
