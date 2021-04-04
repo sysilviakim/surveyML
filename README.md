@@ -10,9 +10,7 @@ The dataset comprises of three national surveys:
 * Cooperative Congressional Election Study ([CCES](https://cces.gov.harvard.edu))
 * [Nationscape](https://www.voterstudygroup.org/publication/nationscape-data-set)
 
-## Feature sets
-
-### Nationscape
+## Feature sets: Nationscape
 
 * Specification 1: **Demographics*. Categorical variables for: gender, ethnicity (4 categories), income (5 categories), and education (4 categories). Age as continuous variable is also included.
 * Specification 2: S1 + 7 Party ID indicators.
@@ -21,7 +19,7 @@ The dataset comprises of three national surveys:
 
 ### Specification 3 details
 
-Specification 3 included views on 7 social issues, 9 economic issues, 4 policies related to immigration.
+Specification 3 included views on 7 social issues, 9 economic issues, and 4 policies related to immigration.
 Although some additional policy questions are asked on some Nationscape waves, we choose the policies are included frequently, in order to maximize coverage. 
 
 | Issue                                                                              | Variable name          |
@@ -49,4 +47,4 @@ Although some additional policy questions are asked on some Nationscape waves, w
 
 ### What else is in Specification 4?
 
-Categorical variables for political knowledge, sexual orientation, language, religion (specific faith + an Evangelical indicator), union membership, and gun ownership, racial attitudes, gender attitudes, and favorability of the following groups: Asians, Blacks, Whites, Democrats, Labor Unions, Latinos, LGBT, Muslims, Republicans, Socialists, the police, and undocumented immigrants.
+Categorical variables for political knowledge, sexual orientation, primary language spoken at home, religion (specific faith + an Evangelical indicator), union membership, gun ownership, racial attitudes, gender attitudes, and favorability of the following groups: Asians, Blacks, Whites, Democrats, Labor Unions, Latinos, LGBT, Muslims, Republicans, Socialists, the police, and undocumented immigrants.
