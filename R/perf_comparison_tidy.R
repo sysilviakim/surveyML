@@ -2,9 +2,9 @@ source(here::here("R", "utilities.R"))
 
 # Load data, create subdirectories =============================================
 perf <- list(
-  CCNS = loadRData(here("data/cces-tidy/perf_summ_CCES_Nationscape.Rda")) %>%
+  CCNS = loadRData(here("output/CCES/perf_summ_CCES_Nationscape.Rda")) %>%
     mutate(Survey = ifelse(Year == 2020, "NS", "CCES")),
-  ANES = loadRData(here("data/anes-tidy/perf_summ_ANES_prezvote_rf.Rda")) %>%
+  ANES = loadRData(here("output/ANES/perf_summ_ANES_prezvote_rf.Rda")) %>%
     mutate(Survey = "ANES")
 ) %>%
   bind_rows()

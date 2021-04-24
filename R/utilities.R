@@ -39,7 +39,8 @@ one_hot <- function(df) {
   return(output)
 }
 
-data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
+data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
+                         max_factors = 20, freq_cut = 99) {
   ## Turn NA into a certain value that is not used as a response in survey
   ## CCES and ANES is okay with 999; not Nationscape
   df[df == "\"\""] <- ""
@@ -53,7 +54,7 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
   ## Zero-variance columns or columns with many responses, except dbl
   ## e.g. birth year
   temp <- df %>%
-    map(~ (length(unique(.x)) < 2 | length(unique(.x)) > 20)) %>%
+    map(~ (length(unique(.x)) < 2 | length(unique(.x)) > max_factors)) %>%
     unlist() %>%
     which()
   if (length(setdiff(temp, match(dbl, names(df), nomatch = 0))) > 0) {
@@ -63,7 +64,7 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100) {
   }
 
   ## Near-zero variance variables
-  temp <- caret::nearZeroVar(df, freqCut = 99 / 1)
+  temp <- caret::nearZeroVar(df, freqCut = freq_cut / (100 - freq_cut))
   if (length(temp) > 0) {
     df <- df[, -temp]
   }
