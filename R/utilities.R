@@ -78,9 +78,14 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
     df <- df[, -temp]
   }
   df <- df %>%
-    mutate_if(is.integer, as.factor) %>%
-    mutate_if(is.numeric, as.factor) %>%
-    mutate_at(tidyselect::all_of(intersect(dbl, names(df))), as.numeric)
+    mutate(across(where(is.integer), as.factor)) %>%
+    mutate(across(where(is.numeric), as.factor)) %>%
+    mutate(
+      across(
+        tidyselect::all_of(intersect(dbl, names(df))),
+        ~ as.numeric(as.character(.x))
+      )
+    )
 
   ## Set up the dependent variable
   df$depvar <- factor(df[[dep]], levels = lvl, labels = lbl)
