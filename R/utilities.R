@@ -837,8 +837,8 @@ set_labels <- c(
 anes_years <- seq(1952, 2016, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
 pid_labels <- c(
-  "extremely_liberal", "liberal", "slightly_liberal", "moderate",
-  "slightly_conservative", "conservative", "extremely_conservative"
+  "strong_democrat", "weak_democrat", "independent_democrat", "independent",
+  "independent_republican", "weak_republican", "strong_republican"
 )
 
 ### Jan's fit_control_basic equivalent
