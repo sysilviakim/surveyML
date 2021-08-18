@@ -19,14 +19,16 @@ for (sfx in c("prezvote", "house", "senate")) {
           temp$train <- temp$train %>% 
             select(
               contains(vl[seq(varset)] %>% unlist() %>% paste(sep = "|"))
-            )
-        } else if (varset > 4) {
+            ) %>%
+            select(-contains("pid"))
+        } else if (varset > 4 & varset < 9) {
           temp$train <- temp$train %>% 
             select(
               ## demo. + extra for Appendix
               contains(vl[c(1, (varset - 1))] %>% unlist() %>% paste(sep = "|"))
-            )
-        }
+            ) %>%
+            select(-contains("pid"))
+        } 
         
         message(paste0("Proceeding for year ", yr))
         message(paste0("Variable set is ", varset))
