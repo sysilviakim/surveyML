@@ -184,14 +184,24 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
       data = temp$train
     )
   } else if (method == "logit") {
-    out <- train(
-      as.factor(depvar) ~ .,
-      metric = metric,
-      method = "glm",
-      family = "binomial",
-      trControl = tc,
-      data = temp$train
-    )
+    if (length(unique(temp$train$depvar)) == 2) {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "glm",
+        family = "binomial",
+        trControl = tc,
+        data = temp$train
+      )
+    } else {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "multinom",
+        trControl = tc,
+        data = temp$train
+      )
+    }
   }
   return(out)
 }
@@ -821,10 +831,15 @@ options(
 set_labels <- c(
   "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates",
   ## Appendix requested
-  paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues"))
+  paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues")),
+  "Demographics Only"
 )
 anes_years <- seq(1952, 2016, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
+pid_labels <- c(
+  "extremely_liberal", "liberal", "slightly_liberal", "moderate",
+  "slightly_conservative", "conservative", "extremely_conservative"
+)
 
 ### Jan's fit_control_basic equivalent
 tc <- trainControl(
