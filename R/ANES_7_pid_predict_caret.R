@@ -47,7 +47,7 @@ for (yr in as.character(anes_years)) {
                 depvar = factor(
                   depvar,
                   levels = c(1, 2, 3),
-                  labels = c("democrat", "indepdent", "republican")
+                  labels = c("democrat", "independent", "republican")
                 )
               ) %>%
               select(contains(vl["set1"] %>% unlist() %>% paste(sep = "|")))

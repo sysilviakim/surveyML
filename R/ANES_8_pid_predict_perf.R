@@ -54,7 +54,7 @@ for (yr in as.character(anes_years)) {
                   depvar = factor(
                     depvar,
                     levels = seq(3),
-                    labels = c("democrat", "indepdent", "republican")
+                    labels = c("democrat", "independent", "republican")
                   )
                 )
             } else {
