@@ -17,7 +17,7 @@ anes_list <- anes %>%
     .
   } %>% map(~ .x$VCF0004[1]) %>% unlist()) %>%
   ## VCF0301 = PID vs. VCF0803 = ideology; different!
-  map(~ .x %>% mutate(pid7 = VCF0301, pid3 = VCF0302))
+  map(~ .x %>% mutate(pid7 = VCF0301, pid3 = VCF0303))
 
 # Presidential vote: one-hot encoding ==========================================
 anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%

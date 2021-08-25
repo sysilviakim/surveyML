@@ -23,7 +23,7 @@ pred_df <- function(list, model, y = "depvar") {
   )
 }
 
-for (yr in as.character(seq(1972, 2016, by = 4))) {
+for (yr in as.character(anes_years)) {
   ## caret results
   for (method in c("logit", "cart", "rf")) {
     for (varset in seq(9, 10)) {
@@ -49,18 +49,12 @@ for (yr in as.character(seq(1972, 2016, by = 4))) {
               .x %>%
                 select(-depvar) %>%
                 select(depvar = pid3, everything()) %>%
-                filter(!is.na(depvar) & depvar %in% seq(5)) %>%
-                mutate(
-                  depvar = case_when(
-                    depvar == 2 | depvar == 4 ~ 3,
-                    TRUE ~ depvar
-                  )
-                ) %>%
+                filter(!is.na(depvar) & depvar %in% seq(3)) %>%
                 mutate(
                   depvar = factor(
                     depvar,
-                    levels = c(5, 3, 1),
-                    labels = c("democrat", "other", "republican")
+                    levels = seq(3),
+                    labels = c("democrat", "indepdent", "republican")
                   )
                 )
             } else {
