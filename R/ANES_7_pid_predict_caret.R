@@ -4,6 +4,11 @@ load(here("data", "anes-tidy", "anes-vl.RData"))
 sfx <- "prezvote"
 load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
 
+if (!dir.exists(here("output/ANES/ol"))) {
+  dir.create(here("output/ANES/ol"), recursive = TRUE)
+  dir.create(here("fig/ANES/ol"), recursive = TRUE)
+}
+
 tc <- trainControl(
   method = "cv",
   number = 10,
@@ -28,7 +33,9 @@ for (yr in as.character(anes_years)) {
               select(depvar = pid7, everything()) %>%
               filter(!is.na(depvar) & depvar %in% seq(7)) %>%
               mutate(
-                depvar = factor(depvar, levels = seq(7), labels = pid_labels)
+                depvar = factor(
+                  depvar, levels = seq(7), labels = pid_labels, ordered = TRUE
+                )
               ) %>%
               select(contains(vl["set1"] %>% unlist() %>% paste(sep = "|")))
           } else {
@@ -84,5 +91,14 @@ for (yr in as.character(anes_years)) {
     rm(turn.rf)
     gc(reset = TRUE)
     message("Random Forests finished.")
+    
+    ## Ordered choice, MASS polr (logistic)
+    method <- "ol"
+    turn.ol <- train_1line(temp, method = method, tc = tc, metric = "prAUC")
+    save(turn.ol, file = file_path_fxn(data = "ANES"))
+    rm(turn.ol)
+    gc(reset = TRUE)
+    message("Random Forests finished.")
+    
   }
 }

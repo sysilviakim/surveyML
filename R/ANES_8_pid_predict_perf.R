@@ -25,7 +25,7 @@ pred_df <- function(list, model, y = "depvar") {
 
 for (yr in as.character(anes_years)) {
   ## caret results
-  for (method in c("logit", "cart", "rf")) {
+  for (method in c("logit", "cart", "rf", "ol")) {
     for (varset in seq(9, 10)) {
       if (varset == 9) {
         temp <- anes_onehot[[as.character(yr)]] %>%

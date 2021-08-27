@@ -1,3 +1,5 @@
+library(MASS) ## otherwise, overwrites dplyr::select
+
 ## Tidyverse ===================================================================
 library(plyr)
 library(dplyr)
@@ -200,6 +202,38 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
         method = "multinom",
         trControl = tc,
         data = temp$train
+      )
+    }
+  } else if (method == "ol") {
+    ## https://github.com/topepo/caret/blob/master/RegressionTests/Code/polr.R
+    mod <- polr(as.factor(depvar) ~ ., data = temp$train)
+    strt <- c(coef(mod), mod$zeta)
+    xdat <- temp$train %>%
+      ## no variation variables dropped
+      select(-setdiff(names(temp$train), c(names(strt), "depvar")))
+    
+    ## Error in optim(s0, fmin, gmin, method = "BFGS", ...) : 
+    ## initial value in 'vmmin' is not finite
+    out <- NULL
+    tryCatch({
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "polr",
+        trControl = tc,
+        data = xdat,
+        start = strt
+      )
+    }, error = function (e) {
+      message(e)
+    })
+    if (is.null(out)) {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "polr",
+        trControl = tc,
+        data = xdat
       )
     }
   }
