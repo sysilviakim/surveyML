@@ -2,6 +2,20 @@
 
 This repository contains reproducible code for Kim and Zilinsky (2021), *The Divided (But Not More Predictable) Electorate: A Machine Learning Analysis of Voting in American Presidential Elections*. APSA preprint is available [here](https://doi.org/10.33774/apsa-2021-45w3m).
 
+## Key scripts [summer/fall 2021 revisions]
+
+- R/ANES_cumulative_buildTo2020.R
+  - Makes consistent variable names for cumulative-2016 dataset and the 2020 survey.
+  - Merges the "up-to-2016" and 2020 ANES data.
+- R/ANES_cumulative2020_Predictions.R
+  - Estimates election-by-election logit models 
+  - Calculates accuracy
+  - Generates fig/ANES/ANES_accuracy_logit
+- R/ANES_cumulative2020_Marginals.R
+  - Estimates LPM models
+  - Generates charts displaying marginal effects of demographics
+
+
 ## Datsets
 
 The dataset comprises of three national surveys:
