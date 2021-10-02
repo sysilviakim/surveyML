@@ -2,7 +2,7 @@ source("R/ANES_cumulative_buildTo2020.R")
 # The code above generates the dateset: anes_cumulative_to_2020
 head(anes_cumulative_to_2020)
 
-# Objective: Calculate Percent Correctly Predicted (PCP) respondents
+# PURPOSE OF THE SCRIPT: Calculate Percent Correctly Predicted (PCP) respondents
 
 library(DAMisc)
 getPCP <- function(x) {
@@ -11,8 +11,6 @@ getPCP <- function(x) {
 
 # We run rolling election-by-election regressions, and store the models
 # (instead of tidying them)
-
-
 
 
 ########################
@@ -28,6 +26,7 @@ fit_REP <- function(df, var = c(" white + black +
   glm(form, data = df, family = "binomial")
 }
 
+# Estimate a list of models:
 VOTE_rep <- anes_cumulative_to_2020 %>% 
   filter(!is.na(votedRepublican2P),
          !is.na(white),
@@ -40,11 +39,17 @@ VOTE_rep <- anes_cumulative_to_2020 %>%
   mutate(model = map(.x = data, .f = fit_REP),
          mod_pcp = map(model, getPCP))
 
+
+# Extract accuracy from the list:
+########################################
 VOTE_rep_PCP <- VOTE_rep %>%
   dplyr::select(mod_pcp) %>%
   pivot_longer(cols=c(mod_pcp)) %>%
   unnest(value) 
 
+
+# Display accuracy over time:
+########################################
 VOTE_rep_PCP %>% ggplot(aes(x=year,y=value)) +
   geom_point() +
   geom_line() +
@@ -52,11 +57,14 @@ VOTE_rep_PCP %>% ggplot(aes(x=year,y=value)) +
   theme_bw() +
   labs(x="", y = "Accuracy",
        title = "Percent correctly predicted (two-party) votes",
-       subtitle = "Logit-based predictions, all data is used")
+       subtitle = "Logit-based predictions (using all available data)") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_x_continuous(breaks = seq(1948, 2020, by = 4))
+ggsave("fig/ANES/ANES_accuracy_logit.pdf")
 
 
 
-# If anyone needs R^2:
+# If anyone needs R^2 (from an OLS model):
 VOTE_rep_rSqaured <- anes_cumulative_to_2020 %>% 
   filter(!is.na(votedRepublican2P),
          !is.na(white),
@@ -72,57 +80,3 @@ VOTE_rep_rSqaured <- anes_cumulative_to_2020 %>%
                factor(income) +
                age,
              data=. )))
-
-VOTE_mod_2020_rep_logit <- anes_cumulative_to_2020 %>% 
-  filter(!is.na(votedRepublican2P),
-         !is.na(white),
-         !is.na(female),
-         !is.na(age),
-         !is.na(income),
-         !is.na(college_grad)) %>%
-  group_by(year) %>%
-  do(glm(votedRepublican2P ~ 
-                white + black +    
-                college_grad +
-                female + 
-                factor(income) +
-                age,
-              data=. , 
-              family = "binomial"))
-
-
-############
-# PID MODELS
-############
-mod_2020_rep <- anes_cumulative_to_2020 %>% 
-  filter(!is.na(Republican),
-         !is.na(white),
-         !is.na(female),
-         !is.na(age),
-         !is.na(income),
-         !is.na(college_grad)) %>%
-  group_by(year) %>%
-  do(lm(Republican ~ 
-          white + black +    
-          college_grad +
-          female + 
-          factor(income) +
-          age,
-        data=. ))
-
-mod_2020_rep_logit <- anes_cumulative_to_2020 %>% 
-  filter(!is.na(Republican),
-         !is.na(white),
-         !is.na(female),
-         !is.na(age),
-         !is.na(income),
-         !is.na(college_grad)) %>%
-  group_by(year) %>%
-  do(glm(Republican ~ 
-           white + black +    
-           college_grad +
-           female + 
-           factor(income) +
-           age,
-         data=. , 
-         family = "binomial"))
