@@ -39,6 +39,14 @@ one_hot <- function(df) {
   return(output)
 }
 
+stata_varlabel_df <- function(x) {
+  x %>% 
+    map(~ attr(.x, "label")) %>%
+    map(~ tibble(label = .x)) %>%
+    map_df(rownames_to_column, .id = 'var') %>%
+    select(-rowname)
+}
+
 data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
                          max_factors = 20, freq_cut = 99) {
   ## Turn NA into a certain value that is not used as a response in survey
