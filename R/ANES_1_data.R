@@ -3,14 +3,54 @@ source(here::here("R", "utilities.R"))
 # Import/export data ===========================================================
 ## 59,944 rows, 1,029(!) variables
 anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta"))
+anes_2020 <- read_dta(here("data/anes/anes_timeseries_2020_stata_20210719.dta"))
 
-anes_labels <- anes %>% 
-  map(~ attr(.x, "label")) %>%
-  map(~ tibble(label = .x)) %>%
-  map_df(rownames_to_column, .id = 'var') %>%
-  select(-rowname)
+anes_labels <- stata_varlabel_df(anes)
+anes_labels_2020 <- stata_varlabel_df(anes_2020)
 
-# Variable Sets ================================================================
+# Delete irrelevant variables ==================================================
+anes <- anes %>%
+  select(
+    -(
+      anes_labels %>%
+        filter(
+          grepl(
+            paste0(
+              "Version|Case ID|Weight:|Completion|Completion|Paper|Interview|",
+              "Unique Respondent Number|Cross-section composition"
+            ),
+            label
+          )
+        ) %>%
+        .$var
+    )
+  )
+anes_labels <- stata_varlabel_df(anes)
+
+## Delete all randomization and restricted variables from 2020
+anes_2020 <- anes_2020 %>%
+  select(
+    -(
+      anes_labels_2020 %>% 
+        filter(
+          grepl(
+            paste0(
+              "version|RANDOM|RESTRICTED|Full sample|Case ID| weight|Sample|",
+              "Corrections|Full sample|variance|Web-only|Mixed|mixed|",
+              "All sample|fresh sample|POST ADMIN|PRE ADMIN|audio consent|",
+              "participant booklet|Case validation|Completed pre only|",
+              "Mode of interview|CAND: |SAMPLE: |SCREENER|IWR DESCR|IWR OBS"
+            ),
+            label
+          )
+        ) %>%
+        .$var
+    )
+  )
+anes_labels_2020 <- stata_varlabel_df(anes_2020)
+save(anes_2020, file = here("data/anes-tidy/anes_2020.Rda"))
+
+# Variable Sets for Cumulative Data ============================================
 vl <- list(
   ## "depvar", "gender", "race", "educ", "faminc", "birthyr"
   ## VCF0704a: Vote for President- Major Parties
@@ -22,7 +62,7 @@ vl <- list(
   ## Family income group percentiles, not amounts
   set1 = c("depvar", "VCF0104", "VCF0105b", "VCF0110", "VCF0114", "VCF0101"),
   ## 7-point party ID
-  set2 = c("VCF0301"), 
+  set2 = c("VCF0301"),
   ## Issues
   ## Difficult to define for ANES, so using elimination
   ## Excluding "belief" variables e.g. VCF9223
@@ -70,7 +110,7 @@ vl <- list(
     ## This excludes "Government Should Ensure Fair Jobs for Blacks"
     filter(!grepl("blacks ", tolower(label))) %>%
     .$var,
-  ## Appendix materials: 
+  ## Appendix materials:
   ## demo. + religion: church attendance recoded from 1970 on, so two sep. var
   set5 = c("VCF0128", "VCF0131", "VCF0130"),
   ## demo. + south
@@ -82,3 +122,4 @@ vl <- list(
 ## set8 can just re-use set3
 vl$set8 <- vl$set3
 save(vl, file = here("data", "anes-tidy", "anes-vl.RData"))
+
