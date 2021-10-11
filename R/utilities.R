@@ -127,6 +127,38 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
   )
 }
 
+fully_correlated <- function(anes_onehot, anes_onehot_2020) {
+  df <- bind_rows(anes_onehot_2020$train, anes_onehot_2020$test) %>%
+    select(-depvar)
+  
+  tmp <- cor(df)
+  tmp[upper.tri(tmp)] <- 0
+  diag(tmp) <- 0
+  
+  tmp_new <- tmp[rowSums(is.na(tmp)) != ncol(tmp), ]
+  df_problem <- df[, apply(tmp, 2, function(x) any(abs(x) == 1, na.rm = TRUE))]
+  
+  ## Check manually
+  which(df %>% map_lgl(~ all(.x == df$v201011_2, na.rm = TRUE)))
+  ## v201011_2 and v201012_2
+  which(df %>% map_lgl(~ all(.x == df$v201116_8, na.rm = TRUE)))
+  
+  ## From each dataframe, delete columns in df_problem
+  anes_onehot[["2020"]] <- anes_onehot_2020 %>%
+    imap(
+      ~ {
+        if ("data.frame" %in% class(.x)) {
+          .x %>%
+            select(-names(df_problem))
+        } else {
+          .x
+        }
+      }
+    )
+  
+  return(anes_onehot)
+}
+
 p_font <- function(p, font, size) {
   p +
     theme(

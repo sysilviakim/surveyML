@@ -47,6 +47,47 @@ anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
     ) %>%
       train_name_clean()
   )
+
+# 2020 snapshot ================================================================
+## ANES 2020 is really tricky, because
+## V201127 and V201128 are coded in a "summary" variable V201129x
+## Must add extra step to delete highly collinear variables
+
+anes_onehot_2020 <- anes_2020 %>%
+  zap_labels() %>%
+  mutate(
+    ## In what year did the Supreme Court of the United States decide
+    ## Geer v. Connecticut? 1896 = correct
+    ## Recode as deviations from the correct answer
+    V201642 = abs(V201642 - 1896),
+    ## Early voting (V201029) and typical voting (V202073)
+    V202073 = case_when(
+      V202073 == 1 | V201029 == 1 ~ 1,
+      V202073 == 2 | V201029 == 2 ~ 2,
+      TRUE ~ V202073
+    )
+  ) %>%
+  select(
+    ## Primary votes
+    -V201021, ## Primary vote
+    -V201029, ## Early vote
+    -V201033, ## Intended prez vote vs. actual prez vote
+    -V201036, ## Preference for candidate
+    -V201127, ## Approval
+    -V201128  ## Approval (this question needs to be carefully coded, btw)
+  ) %>%
+  data_routine(
+    ## Delete almost-identical variables
+    .,
+    dep = "V202073",
+    lvl = c(1, 2),
+    lbl = c("DemCand", "RepCand"),
+    ## age, Geer v. Connecticut, hours worked per week
+    dbl = c("V201507x", "V201642", "V201527") 
+  ) %>%
+  train_name_clean()
+
+anes_onehot <- fully_correlated_delete(anes_onehot, anes_onehot_2020)
 save(anes_onehot, file = here("data", "anes-tidy", "anes_prezvote.RData"))
 
 # In ANES, there is no equivalent continuous approval; only categorical
