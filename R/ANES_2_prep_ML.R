@@ -2,20 +2,9 @@ source(here::here("R", "ANES_1_data.R"))
 
 # Cumulative dataset split by year =============================================
 anes_list <- anes %>%
-  select(-Version, -VCF0006, -VCF0006a) %>%
-  select(
-    -matches(
-      anes_labels %>%
-        filter(grepl("weight", tolower(label))) %>%
-        .$var %>%
-        paste0(collapse = "|")
-    )
-  ) %>%
   ## VCF0004 = Year of study
   group_split(VCF0004, .keep = TRUE) %>%
-  `names<-`({
-    .
-  } %>% map(~ .x$VCF0004[1]) %>% unlist())
+  `names<-`({.} %>% map(~ .x$VCF0004[1]) %>% unlist())
 
 # Presidential vote: one-hot encoding ==========================================
 anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
