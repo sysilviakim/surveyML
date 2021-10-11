@@ -127,7 +127,7 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
   )
 }
 
-fully_correlated <- function(anes_onehot, anes_onehot_2020) {
+fully_correlated_delete <- function(anes_onehot, anes_onehot_2020) {
   df <- bind_rows(anes_onehot_2020$train, anes_onehot_2020$test) %>%
     select(-depvar)
   

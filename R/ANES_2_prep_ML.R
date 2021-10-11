@@ -48,7 +48,7 @@ anes_onehot <- anes_list[as.character(seq(1952, 2016, by = 4))] %>%
       train_name_clean()
   )
 
-# 2020 snapshot ================================================================
+# 2020 snapshot (presidential) =================================================
 ## ANES 2020 is really tricky, because
 ## V201127 and V201128 are coded in a "summary" variable V201129x
 ## Must add extra step to delete highly collinear variables
