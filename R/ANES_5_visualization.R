@@ -32,7 +32,6 @@ print(
 )
 
 # Importance of demo/pid over the years ========================================
-
 cap <- "Base category: Strong Democrat"
 p_list <- list(
   p1 = vi_ts_demo2(vid, set = 2) + scale_y_continuous(limits = c(0, 70)),
@@ -50,7 +49,7 @@ p_list <- list(
   map(
     ~ .x + 
       scale_x_continuous(
-        breaks = seq(1952, 2016, by = 4),
+        breaks = seq(1952, 2020, by = 4),
         labels = function(x) paste0("\'", str_sub(x, 3, 4))
       )
   )

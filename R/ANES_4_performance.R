@@ -12,7 +12,6 @@ vid <- perf <- list()
 ## See table(anes$VCF0301, anes$VCF0004)
 ## So exclude 1948
 
-anes_years <- seq(1952, 2020, by = 4)
 for (sfx in c("prezvote")) { ## , "house", "senate"
   load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
   for (yr in as.character(anes_years)) {

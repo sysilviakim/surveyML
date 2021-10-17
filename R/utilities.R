@@ -391,7 +391,7 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
   )
 }
 
-vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2016, by = 4),
+vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2020, by = 4),
                    lvl = c("Black", "Hispanic", "Gender", "Age")) {
   x %>%
     bind_rows(.id = "Year") %>%
@@ -768,7 +768,7 @@ vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "PID",
 
 # Varimp over time fxns (ANES)
 vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
-                        names = "Demographics", yrs = seq(1952, 2016, by = 4)) {
+                        names = "Demographics", yrs = seq(1952, 2020, by = 4)) {
   x %>%
     map(y) %>%
     map(method) %>%
@@ -776,14 +776,17 @@ vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0104_2", rownames)) %>% select(Gender = Overall),
+          filter(grepl("vcf0104_2|v201600", rownames)) %>% 
+          select(Gender = Overall),
         .x %>%
-          filter(grepl("vcf0101", rownames)) %>% select(Age = Overall),
+          filter(grepl("vcf0101|v201507x", rownames)) %>% 
+          select(Age = Overall),
         .x %>%
-          filter(grepl("vcf0105b_2", rownames)) %>% select(Black = Overall),
+          filter(grepl("vcf0105b_2|v201549x_2", rownames)) %>%
+          select(Black = Overall),
         ## For some years, race beyond white and black not there
         .x %>%
-          filter(grepl("vcf0105b_3", rownames)) %>%
+          filter(grepl("vcf0105b_3|v201549x_3", rownames)) %>%
           select(Hispanic = Overall) %>%
           bind_rows(., data.frame(Hispanic = NA)) %>%
           slice(1)
@@ -793,7 +796,7 @@ vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
 }
 
 vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
-                       names = "Demographics", yrs = seq(1952, 2016, by = 4),
+                       names = "Demographics", yrs = seq(1952, 2020, by = 4),
                        lvl = c(
                          "HS Graduate", "Some College", "College+"
                        )) {
@@ -804,13 +807,13 @@ vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0110_2", rownames)) %>%
+          filter(grepl("vcf0110_2|v201510_2", rownames)) %>%
           select(`HS Graduate` = Overall),
         .x %>%
-          filter(grepl("vcf0110_3", rownames)) %>%
+          filter(grepl("vcf0110_3|v201510_3", rownames)) %>%
           select(`Some College` = Overall),
         .x %>%
-          filter(grepl("vcf0110_4", rownames)) %>%
+          filter(grepl("vcf0110_4|v201510_4", rownames)) %>%
           select(`College+` = Overall)
       )
     ) %>%
@@ -818,7 +821,7 @@ vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
 }
 
 vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
-                       yrs = seq(1952, 2016, by = 4),
+                       yrs = seq(1952, 2020, by = 4),
                        lvl = rev(c(
                          "Weak Democrat", "Lean Democrat", "Independent",
                          "Lean Republican", "Weak Republican",
@@ -831,22 +834,22 @@ vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0301_2", rownames)) %>%
+          filter(grepl("vcf0301_2|v201231x_2", rownames)) %>%
           select(`Weak Democrat` = Overall),
         .x %>%
-          filter(grepl("vcf0301_3", rownames)) %>%
+          filter(grepl("vcf0301_3|v201231x_3", rownames)) %>%
           select(`Lean Democrat` = Overall),
         .x %>%
-          filter(grepl("vcf0301_4", rownames)) %>%
+          filter(grepl("vcf0301_4|v201231x_4", rownames)) %>%
           select(`Independent` = Overall),
         .x %>%
-          filter(grepl("vcf0301_5", rownames)) %>%
+          filter(grepl("vcf0301_5|v201231x_5", rownames)) %>%
           select(`Lean Republican` = Overall),
         .x %>%
-          filter(grepl("vcf0301_6", rownames)) %>%
+          filter(grepl("vcf0301_6|v201231x_6", rownames)) %>%
           select(`Weak Republican` = Overall),
         .x %>%
-          filter(grepl("vcf0301_7", rownames)) %>%
+          filter(grepl("vcf0301_7|v201231x_7", rownames)) %>%
           select(`Strong Republican` = Overall)
       )
     ) %>%
@@ -908,7 +911,7 @@ set_labels <- c(
   paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues")) ## ,
   ## "Demographics Only"
 )
-anes_years <- seq(1952, 2016, by = 4)
+anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
