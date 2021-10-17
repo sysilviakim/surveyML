@@ -63,25 +63,35 @@ anes_onehot_2020 <- anes_2020 %>%
     ## Recode as deviations from the correct answer
     V201642 = abs(V201642 - 1896),
     ## Early voting (V201029) and typical voting (V202073)
-    V202073 = case_when(
-      V202073 == 1 | V201029 == 1 ~ 1,
-      V202073 == 2 | V201029 == 2 ~ 2,
-      TRUE ~ V202073
-    )
+    # V202073 = case_when(
+    #   V202073 == 1 | V201029 == 1 ~ 1,
+    #   V202073 == 2 | V201029 == 2 ~ 2,
+    #   TRUE ~ V202073
+    # )
   ) %>%
   select(
-    ## Primary votes
+    ## Redundant variables
     -V201021, ## Primary vote
     -V201029, ## Early vote
+    -V202073, ## Non-summary variable
     -V201033, ## Intended prez vote vs. actual prez vote
-    -V201036, ## Preference for candidate
-    -V201127, ## Approval
-    -V201128  ## Approval (this question needs to be carefully coded, btw)
+    -V201036z, ## Preference for candidate
+    -V201036,  ## Preference for candidate
+    -V202077,  ## Preference for candidate
+    -V202077z, ## Preference for candidate
+    -V202105x, ## Preference summary
+    -V201075x, ## Party of pre-election presidential vote/intent/preference
+    -V202435,  ## Like-dislike presidential candidate (Dem)
+    -V202436,  ## Like-dislike presidential candidate (Rep)
+    -V201127,  ## Approval
+    -V201128   ## Approval (this question needs to be carefully coded, btw)
+    ## Leave variables such as V201129x which ask about approval of 
+    ## specific tasks such as job, economy, foreign relations, ...
   ) %>%
   data_routine(
     ## Delete almost-identical variables
     .,
-    dep = "V202073",
+    dep = "V202110x",
     lvl = c(1, 2),
     lbl = c("DemCand", "RepCand"),
     ## age, Geer v. Connecticut, hours worked per week
