@@ -49,7 +49,7 @@ p_list <- list(
   map(
     ~ .x + 
       scale_x_continuous(
-        breaks = seq(1952, 2020, by = 4),
+        breaks = anes_years,
         labels = function(x) paste0("\'", str_sub(x, 3, 4))
       )
   )

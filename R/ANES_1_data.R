@@ -64,6 +64,7 @@ anes_2020 <- anes_2020 %>%
       V201014b %in% (state_df %>% filter(south == 1) %>% .$stfips) ~ 1,
       TRUE ~ 0
     ),
+    V201510 = as.numeric(V201510),
     V201510 = case_when(
       V201510 %in% c(4, 5, 6, 7, 8) ~ 4,
       TRUE ~ V201510
