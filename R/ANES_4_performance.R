@@ -12,7 +12,8 @@ vid <- perf <- list()
 ## See table(anes$VCF0301, anes$VCF0004)
 ## So exclude 1948
 
-for (sfx in c("prezvote", "house", "senate")) {
+anes_years <- seq(1952, 2020, by = 4)
+for (sfx in c("prezvote")) { ## , "house", "senate"
   load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
   for (yr in as.character(anes_years)) {
     temp <- anes_onehot[[as.character(yr)]]
@@ -66,7 +67,7 @@ for (sfx in c("prezvote", "house", "senate")) {
 load(here("output/ANES/ANES_perf.RData"))
 load(here("output/ANES/ANES_varimp.RData"))
 
-cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
+cross2(c("prezvote"), c("logit", "cart", "rf")) %>% ## , "house", "senate"
   map(
     ~ {
       tab <- seq(8) %>%
@@ -93,7 +94,7 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
               .x[[2]] == "logit", "Logit, ",
               ifelse(.x[[2]] == "cart", "CART, ", "Random Forests, ")
             ),
-            "ANES 1952--2016"
+            "ANES 1952--2020"
           ),
           digits = c(0, 0, 0, 4, 4, 4, 4, 4, 4)
         )
@@ -110,7 +111,7 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   )
 
 # Alternative, just accuracy between methods ===================================
-for (sfx in c("prezvote", "house", "senate")) {
+for (sfx in c("prezvote")) { ## , "house", "senate"
   tab <- c("logit", "cart", "rf") %>%
     map(
       ~ seq(8) %>%
