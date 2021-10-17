@@ -51,7 +51,7 @@ anes_2020 <- anes_2020 %>%
   )
 anes_labels_2020 <- stata_varlabel_df(anes_2020)
 
-## To match cumulative, need to create 3-pt ideology and South variable
+## To match cumulative, need to create 3-pt ideo, South, and 4-category edu
 anes_2020 <- anes_2020 %>%
   mutate(
     V201200b = case_when(
@@ -63,6 +63,10 @@ anes_2020 <- anes_2020 %>%
     south = case_when(
       V201014b %in% (state_df %>% filter(south == 1) %>% .$stfips) ~ 1,
       TRUE ~ 0
+    ),
+    V201510 = case_when(
+      V201510 %in% c(4, 5, 6, 7, 8) ~ 4,
+      TRUE ~ V201510
     )
   )
 
