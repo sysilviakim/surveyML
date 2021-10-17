@@ -12,6 +12,10 @@ for (sfx in c("prezvote", "house", "senate")) {
   for (yr in as.character(anes_years)) {
     if (!(sfx %in% c("house", "senate") & year == 2020)) {
       if (yr %in% names(anes_onehot)) {
+        if (yr == "2020") {
+          load(here("data", "anes-tidy", "anes-vl-2020.RData"))
+        }
+        
         for (varset in seq(8)) {
           temp <- anes_onehot[[as.character(yr)]]
           
