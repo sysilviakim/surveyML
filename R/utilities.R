@@ -454,7 +454,7 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
                     colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1,
-                    name = "Specification") {
+                    name = "Specification", accrange = FALSE) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,
@@ -469,8 +469,14 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
     )
   }
 
+  if (accrange) {
+    p <- p + geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
+  } else {
+    p <- p +
+      geom_line(size = 1)
+  }
+  
   p <- p +
-    geom_line(size = 1) + 
     geom_point(aes(shape = Set)) +
     scale_shape_discrete(name = name) +
     scale_x_continuous(breaks = anes_years) +
