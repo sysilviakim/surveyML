@@ -88,6 +88,14 @@ anes_onehot_2020 <- anes_2020 %>%
     ## Leave variables such as V201129x which ask about approval of 
     ## specific tasks such as job, economy, foreign relations, ...
   ) %>%
+  mutate(
+    pid7 = V201231x, 
+    pid3 = case_when(
+      V201231x %in% c(1, 2, 3) ~ 1,
+      V201231x == 4 ~ 2,
+      V201231x %in% c(5, 6, 7) ~ 3
+    )
+  ) %>%
   data_routine(
     ## Delete almost-identical variables
     .,
@@ -95,7 +103,7 @@ anes_onehot_2020 <- anes_2020 %>%
     lvl = c(1, 2),
     lbl = c("DemCand", "RepCand"),
     ## age, Geer v. Connecticut, hours worked per week
-    dbl = c("V201507x", "V201642", "V201527") 
+    dbl = c("V201507x", "V201642", "V201527", "pid3", "pid7") 
   ) %>%
   train_name_clean()
 

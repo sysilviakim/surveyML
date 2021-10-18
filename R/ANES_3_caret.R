@@ -17,7 +17,9 @@ for (sfx in c("prezvote", "house", "senate")) {
         }
         
         for (varset in seq(8)) {
-          temp <- anes_onehot[[as.character(yr)]]
+          temp <- anes_onehot[[as.character(yr)]] %>%
+            ## redundant for this iteration of vote choice
+            select(-pid3, -pid7)
           
           ## vl already loaded
           if (varset < 4) {
