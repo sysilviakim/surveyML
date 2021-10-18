@@ -453,7 +453,8 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 }
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
-                    colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1) {
+                    colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1,
+                    name = "Specification") {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,
@@ -471,9 +472,9 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
   p <- p +
     geom_line(size = 1) + 
     geom_point(aes(shape = Set)) +
-    scale_shape_discrete(name = "Specification") +
-    scale_x_continuous(breaks = c(anes_years, 2020)) +
-    scale_color_viridis_d(direction = vdir, name = "Specification", end = end) +
+    scale_shape_discrete(name = name) +
+    scale_x_continuous(breaks = anes_years) +
+    scale_color_viridis_d(direction = vdir, name = name, end = end) +
     guides(
       colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
       shape = guide_legend(nrow = colour_nrow, byrow = TRUE)
