@@ -95,7 +95,7 @@ plot_temp <- function(y = "pid7", ...) {
   return(p)
 }
 
-for (method in c("logit", "rf", "cart", "ol")) {
+for (method in c("logit", "cart", "ol", "rf")) {
   perf <- loadRData(
     here("output/ANES/", paste0("perf_summ_ANES_prezvote_", method, "_pid.Rda"))
   ) %>%
@@ -149,45 +149,20 @@ for (method in c("logit", "rf", "cart", "ol")) {
 perf %>%
   filter(Survey == "7-pt PID") %>%
   .$Accuracy %>%
-  mean() ## 0.2667 for rf, 0.2702 for ol
+  mean()
 perf %>%
   filter(Survey == "3-pt PID") %>%
   .$Accuracy %>%
-  mean() ## 0.5773 for rf, 0.5745 for ol
+  mean()
 
 perf %>%
   filter(Survey == "7-pt PID") %>%
   lm(Accuracy ~ Year, data = .) %>%
   broom::tidy()
-
-# A tibble: 2 x 5: rf
-# term         estimate    std.error statistic p.value
-# <chr>           <dbl>        <dbl>     <dbl>   <dbl>
-# 1 (Intercept) -1.41      0.682        -2.07   0.0567
-# 2 Year         0.000845  0.000344      2.46   0.0267
-
-# A tibble: 2 x 5: ol
-# term        estimate std.error statistic p.value
-# <chr>          <dbl>     <dbl>     <dbl>   <dbl>
-# 1 (Intercept) -1.76     0.914        -1.93  0.0729
-# 2 Year         0.00102  0.000461      2.22  0.0419
-
 perf %>%
   filter(Survey == "3-pt PID") %>%
   lm(Accuracy ~ Year, data = .) %>%
   broom::tidy()
-
-# A tibble: 2 x 5
-# term           estimate std.error statistic p.value
-# <chr>             <dbl>     <dbl>     <dbl>   <dbl>
-# 1 (Intercept) -0.955     0.973       -0.981   0.342
-# 2 Year         0.000772  0.000491     1.57    0.136
-
-# A tibble: 2 x 5
-# term        estimate std.error statistic p.value
-# <chr>          <dbl>     <dbl>     <dbl>   <dbl>
-# 1 (Intercept) -1.42     1.02         -1.40  0.181 
-# 2 Year         0.00101  0.000512      1.97  0.0680
 
 ## Baseline
 anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta")) %>%
