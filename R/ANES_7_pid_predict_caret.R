@@ -24,6 +24,9 @@ tc <- trainControl(
 for (yr in as.character(anes_years)) {
   ## so that files are not overwritten
   for (varset in seq(9, 10)) {
+    if (yr == "2020") {
+      load(here("data", "anes-tidy", "anes-vl-2020.RData"))
+    }
     if (varset == 9) {
       temp <- anes_onehot[[as.character(yr)]] %>%
         imap(
