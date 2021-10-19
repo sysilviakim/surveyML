@@ -454,7 +454,7 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
                     colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1,
-                    name = "Specification", accrange = FALSE) {
+                    name = "Specification", accrange = FALSE, y2 = FALSE) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,
@@ -469,6 +469,13 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
     )
   }
 
+  ## If two y-variables, as in edited manuscript
+  if (y2) {
+    p <- ggplot(
+      x, aes(x = Year,  y = !!as.name(metric), colour = Set, shape = Set)
+    )
+  }
+  
   if (accrange) {
     p <- p + geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
   } else {
