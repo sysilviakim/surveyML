@@ -105,10 +105,36 @@ VOTE_mod_2020_rep_logit <- anes_cumulative_to_2020 %>%
   theme_bw() +
   theme(legend.position = "none",
         text = element_text(size=13)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  scale_x_continuous(breaks = seq(1948, 2020, by = 8))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 )
 ggsave("fig/ANES_OLS/LPM_demos_Outcome_is_RepubPID_upto2020.pdf")
+
+(
+  F2_part2_1976plus <-  mod_2020_rep %>% 
+    filter(year >=1976) %>%
+    # filter(term != "(Intercept)",
+    #        term != "black") %>%
+    mutate(term2 = case_when(
+      term == "white" ~ "White",
+      term == "female" ~ "Woman",
+      term == "college_grad" ~ "College graduate")) %>%
+    filter(!is.na(term2)) %>%
+    ggplot(aes(x=year,y=estimate,color=term, shape = term)) +
+    geom_point(size=2.3) +
+    geom_errorbar(aes(ymax = estimate + 1.96*std.error, 
+                      ymin = estimate - 1.96*std.error),width=.3) +
+    facet_wrap(~term2) +
+    labs(y="Estimated marginal effect\nof selected demographics", x = "ANES wave",
+         subtitle = "Predicting Republican Party ID") +
+    geom_hline(yintercept=0) +
+    scale_x_continuous(breaks = c(1976,seq(1984,2020,8),2020)) +
+    scale_color_manual(values = c("darkblue","darkred","darkorange")) +
+    theme_bw() +
+    theme(legend.position = "none",
+          text = element_text(size=13)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+)
+
 
 
 mod_2020_rep_logit %>% 
@@ -131,8 +157,7 @@ mod_2020_rep_logit %>%
   theme_bw() +
   theme(legend.position = "none",
         text = element_text(size=13)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  scale_x_continuous(breaks = seq(1948, 2020, by = 8))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ggsave("fig/ANES_OLS/LPM_demos_Outcome_is_RepubPID_logit.pdf")
 
 
@@ -158,13 +183,46 @@ ggsave("fig/ANES_OLS/LPM_demos_Outcome_is_RepubPID_logit.pdf")
   theme_bw() +
   theme(legend.position = "none",
         text = element_text(size=13)) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  scale_x_continuous(breaks = seq(1948, 2020, by = 8))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 # (X = race, education, gender, age, income)
 )
 ggsave("fig/ANES_OLS/LPM_demos_Outcome_is_RepubVoteChoice_upto2020.pdf")
 
 
+(
+  F2_part1_1976plus <- VOTE_mod_2020_rep %>% 
+    filter(year >= 1976) %>%
+    # filter(term != "(Intercept)",
+    #        term != "black") %>%
+    mutate(term2 = case_when(
+      term == "white" ~ "White",
+      term == "female" ~ "Woman",
+      term == "college_grad" ~ "College graduate")) %>%
+    filter(!is.na(term2)) %>%
+    ggplot(aes(x=year,y=estimate,color=term, shape = term)) +
+    geom_point(size=2.3) +
+    geom_errorbar(aes(ymax = estimate + 1.96*std.error, 
+                      ymin = estimate - 1.96*std.error),width=.3) +
+    facet_wrap(~term2) +
+    labs(y="Estimated marginal effect\nof selected demographics", x = "ANES wave",
+         subtitle = "Predicting Republican two-party vote choice") +
+    geom_hline(yintercept=0) +
+    scale_x_continuous(breaks = c(1976,seq(1984,2020,8),2020)) +
+    scale_color_manual(values = c("darkblue","darkred","darkorange")) +
+    theme_bw() +
+    theme(legend.position = "none",
+          text = element_text(size=13)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  # (X = race, education, gender, age, income)
+)
+
+
+
 library(ggpubr)
 ggarrange(F2_part1,F2_part2,nrow = 2)
 ggsave("fig/ANES_OLS/LPM_demos_2Outcomes.pdf")
+
+ggarrange(F2_part1_1976plus,F2_part2_1976plus,nrow = 2)
+ggsave("fig/ANES_OLS/LPM_demos_2Outcomes-shorter.pdf")
+
+ggsave("fig/ANES_OLS/LPM-fig-shorter.pdf")
