@@ -3,7 +3,7 @@ load(here("output/ANES/ANES_perf.RData"))
 load(here("output/ANES/ANES_varimp.RData"))
 
 # Summary Rda files ============================================================
-cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
+cross2(c("prezvote"), c("logit", "cart", "rf")) %>% ## , "house", "senate"
   map(
     ~ {
       summ_df <- seq(8) %>%
@@ -24,7 +24,7 @@ cross2(c("prezvote", "house", "senate"), c("logit", "cart", "rf")) %>%
   )
 
 # SI figures ===================================================================
-cross2(c("prezvote", "house", "senate"), seq(8)) %>%
+cross2(c("prezvote"), seq(8)) %>% ## , "house", "senate"
   map(setNames, c("yvar", "set")) %>%
   map(
     function(x) {

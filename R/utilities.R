@@ -1,3 +1,5 @@
+library(MASS) ## otherwise, overwrites dplyr::select
+
 ## Tidyverse ===================================================================
 library(plyr)
 library(dplyr)
@@ -37,6 +39,14 @@ one_hot <- function(df) {
   x <- predict(caret::dummyVars(~., df, fullRank = TRUE), df)
   output <- as_tibble(x)
   return(output)
+}
+
+stata_varlabel_df <- function(x) {
+  x %>% 
+    map(~ attr(.x, "label")) %>%
+    map(~ tibble(label = .x)) %>%
+    map_df(rownames_to_column, .id = 'var') %>%
+    select(-rowname)
 }
 
 data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
@@ -119,6 +129,38 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
   )
 }
 
+fully_correlated_delete <- function(anes_onehot, anes_onehot_2020) {
+  df <- bind_rows(anes_onehot_2020$train, anes_onehot_2020$test) %>%
+    select(-depvar)
+  
+  tmp <- cor(df)
+  tmp[upper.tri(tmp)] <- 0
+  diag(tmp) <- 0
+  
+  tmp_new <- tmp[rowSums(is.na(tmp)) != ncol(tmp), ]
+  df_problem <- df[, apply(tmp, 2, function(x) any(abs(x) == 1, na.rm = TRUE))]
+  
+  ## Check manually
+  which(df %>% map_lgl(~ all(.x == df$v201011_2, na.rm = TRUE)))
+  ## v201011_2 and v201012_2
+  which(df %>% map_lgl(~ all(.x == df$v201116_8, na.rm = TRUE)))
+  
+  ## From each dataframe, delete columns in df_problem
+  anes_onehot[["2020"]] <- anes_onehot_2020 %>%
+    imap(
+      ~ {
+        if ("data.frame" %in% class(.x)) {
+          .x %>%
+            select(-names(df_problem))
+        } else {
+          .x
+        }
+      }
+    )
+  
+  return(anes_onehot)
+}
+
 p_font <- function(p, font, size) {
   p +
     theme(
@@ -184,14 +226,56 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
       data = temp$train
     )
   } else if (method == "logit") {
-    out <- train(
-      as.factor(depvar) ~ .,
-      metric = metric,
-      method = "glm",
-      family = "binomial",
-      trControl = tc,
-      data = temp$train
-    )
+    if (length(unique(temp$train$depvar)) == 2) {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "glm",
+        family = "binomial",
+        trControl = tc,
+        data = temp$train
+      )
+    } else {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "multinom",
+        trControl = tc,
+        data = temp$train
+      )
+    }
+  } else if (method == "ol") {
+    ## https://github.com/topepo/caret/blob/master/RegressionTests/Code/polr.R
+    mod <- polr(as.factor(depvar) ~ ., data = temp$train)
+    strt <- c(coef(mod), mod$zeta)
+    xdat <- temp$train %>%
+      ## no variation variables dropped
+      select(-setdiff(names(temp$train), c(names(strt), "depvar")))
+    
+    ## Error in optim(s0, fmin, gmin, method = "BFGS", ...) : 
+    ## initial value in 'vmmin' is not finite
+    out <- NULL
+    tryCatch({
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "polr",
+        trControl = tc,
+        data = xdat,
+        start = strt
+      )
+    }, error = function (e) {
+      message(e)
+    })
+    if (is.null(out)) {
+      out <- train(
+        as.factor(depvar) ~ .,
+        metric = metric,
+        method = "polr",
+        trControl = tc,
+        data = xdat
+      )
+    }
   }
   return(out)
 }
@@ -307,7 +391,7 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
   )
 }
 
-vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2016, by = 4),
+vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2020, by = 4),
                    lvl = c("Black", "Hispanic", "Gender", "Age")) {
   x %>%
     bind_rows(.id = "Year") %>%
@@ -369,7 +453,8 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 }
 
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
-                    colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1) {
+                    colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1,
+                    name = "Specification", accrange = FALSE, y2 = FALSE) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,
@@ -384,12 +469,25 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
     )
   }
 
+  ## If two y-variables, as in edited manuscript
+  if (y2) {
+    p <- ggplot(
+      x, aes(x = Year,  y = !!as.name(metric), colour = Set, shape = Set)
+    )
+  }
+  
+  if (accrange) {
+    p <- p + geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
+  } else {
+    p <- p +
+      geom_line(size = 1)
+  }
+  
   p <- p +
-    geom_line(size = 1) + 
     geom_point(aes(shape = Set)) +
-    scale_shape_discrete(name = "Specification") +
-    scale_x_continuous(breaks = c(anes_years, 2020)) +
-    scale_color_viridis_d(direction = vdir, name = "Specification", end = end) +
+    scale_shape_discrete(name = name) +
+    scale_x_continuous(breaks = anes_years) +
+    scale_color_viridis_d(direction = vdir, name = name, end = end) +
     guides(
       colour = guide_legend(nrow = colour_nrow, byrow = TRUE),
       shape = guide_legend(nrow = colour_nrow, byrow = TRUE)
@@ -684,7 +782,7 @@ vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "PID",
 
 # Varimp over time fxns (ANES)
 vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
-                        names = "Demographics", yrs = seq(1952, 2016, by = 4)) {
+                        names = "Demographics", yrs = seq(1952, 2020, by = 4)) {
   x %>%
     map(y) %>%
     map(method) %>%
@@ -692,14 +790,17 @@ vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0104_2", rownames)) %>% select(Gender = Overall),
+          filter(grepl("vcf0104_2|v201600", rownames)) %>% 
+          select(Gender = Overall),
         .x %>%
-          filter(grepl("vcf0101", rownames)) %>% select(Age = Overall),
+          filter(grepl("vcf0101|v201507x", rownames)) %>% 
+          select(Age = Overall),
         .x %>%
-          filter(grepl("vcf0105b_2", rownames)) %>% select(Black = Overall),
+          filter(grepl("vcf0105b_2|v201549x_2", rownames)) %>%
+          select(Black = Overall),
         ## For some years, race beyond white and black not there
         .x %>%
-          filter(grepl("vcf0105b_3", rownames)) %>%
+          filter(grepl("vcf0105b_3|v201549x_3", rownames)) %>%
           select(Hispanic = Overall) %>%
           bind_rows(., data.frame(Hispanic = NA)) %>%
           slice(1)
@@ -709,7 +810,7 @@ vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
 }
 
 vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
-                       names = "Demographics", yrs = seq(1952, 2016, by = 4),
+                       names = "Demographics", yrs = seq(1952, 2020, by = 4),
                        lvl = c(
                          "HS Graduate", "Some College", "College+"
                        )) {
@@ -720,13 +821,13 @@ vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0110_2", rownames)) %>%
+          filter(grepl("vcf0110_2|v201510_2", rownames)) %>%
           select(`HS Graduate` = Overall),
         .x %>%
-          filter(grepl("vcf0110_3", rownames)) %>%
+          filter(grepl("vcf0110_3|v201510_3", rownames)) %>%
           select(`Some College` = Overall),
         .x %>%
-          filter(grepl("vcf0110_4", rownames)) %>%
+          filter(grepl("vcf0110_4|v201510_4", rownames)) %>%
           select(`College+` = Overall)
       )
     ) %>%
@@ -734,7 +835,7 @@ vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
 }
 
 vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
-                       yrs = seq(1952, 2016, by = 4),
+                       yrs = seq(1952, 2020, by = 4),
                        lvl = rev(c(
                          "Weak Democrat", "Lean Democrat", "Independent",
                          "Lean Republican", "Weak Republican",
@@ -747,22 +848,22 @@ vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
     map(
       ~ bind_cols(
         .x %>%
-          filter(grepl("vcf0301_2", rownames)) %>%
+          filter(grepl("vcf0301_2|v201231x_2", rownames)) %>%
           select(`Weak Democrat` = Overall),
         .x %>%
-          filter(grepl("vcf0301_3", rownames)) %>%
+          filter(grepl("vcf0301_3|v201231x_3", rownames)) %>%
           select(`Lean Democrat` = Overall),
         .x %>%
-          filter(grepl("vcf0301_4", rownames)) %>%
+          filter(grepl("vcf0301_4|v201231x_4", rownames)) %>%
           select(`Independent` = Overall),
         .x %>%
-          filter(grepl("vcf0301_5", rownames)) %>%
+          filter(grepl("vcf0301_5|v201231x_5", rownames)) %>%
           select(`Lean Republican` = Overall),
         .x %>%
-          filter(grepl("vcf0301_6", rownames)) %>%
+          filter(grepl("vcf0301_6|v201231x_6", rownames)) %>%
           select(`Weak Republican` = Overall),
         .x %>%
-          filter(grepl("vcf0301_7", rownames)) %>%
+          filter(grepl("vcf0301_7|v201231x_7", rownames)) %>%
           select(`Strong Republican` = Overall)
       )
     ) %>%
@@ -821,10 +922,15 @@ options(
 set_labels <- c(
   "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates",
   ## Appendix requested
-  paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues"))
+  paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues")) ## ,
+  ## "Demographics Only"
 )
-anes_years <- seq(1952, 2016, by = 4)
+anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
+pid_labels <- c(
+  "strong_democrat", "weak_democrat", "independent_democrat", "independent",
+  "independent_republican", "weak_republican", "strong_republican"
+)
 
 ### Jan's fit_control_basic equivalent
 tc <- trainControl(

@@ -28,8 +28,32 @@ summ_df <- seq(8) %>%
         Year = 2020
       )
   )
-
 save(summ_df, file = here("output/CCES/perf_summ_CCES_Nationscape.Rda"))
+
+# CCES performance but logit ===================================================
+summ_df <- seq(8) %>%
+  map(
+    ~ perf_summ(
+      within(perf, rm("year2006")), 1, "logit", .x, yr = rev(cces_years)
+    )
+  ) %>%
+  bind_rows(.id = "Set") %>%
+  mutate(Set = factor(Set, levels = seq(8), labels = set_labels)) %>%
+  arrange(desc(Year), Set) %>%
+  bind_rows(
+    ., readRDS(here("output/NS_perf_Logit.RDS")) %>%
+      rename(
+        Set = `Model and Specification`,
+        Accuracy_lower = AccuracyLower,
+        Accuracy_upper = AccuracyUpper
+      ) %>%
+      mutate(
+        Set = gsub("RF: ", "", Set), 
+        Set = gsub("Symbolic ideology", "Ideology", Set),
+        Year = 2020
+      )
+  )
+save(summ_df, file = here("output/CCES/perf_summ_CCES_Nationscape_Logit.Rda"))
 
 # SI figures ===================================================================
 cross2(c(preschoice = 1, house = 3, senate = 4), seq(4)) %>%

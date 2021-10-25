@@ -102,7 +102,7 @@ levels(temp$Set) %>%
       select(Year, Accuracy_lower, Accuracy_upper, Accuracy, Survey) %>%
       ggplot(aes(x = Year, y = Accuracy, color = Survey, shape = Survey)) +
       geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper)) +
-      scale_x_continuous(breaks = c(anes_years, 2020)) +
+      scale_x_continuous(breaks = anes_years) +
       scale_y_continuous(limits = c(.4, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
       scale_color_viridis_d(end = 0.85)
   ) %>%
@@ -129,7 +129,7 @@ p <- temp %>%
     show.legend = c(shape = TRUE, linetype = FALSE)
   ) +
   scale_shape_discrete(name = "Specification") +
-  scale_x_continuous(breaks = c(anes_years, 2020)) +
+  scale_x_continuous(breaks = anes_years) +
   scale_y_continuous(limits = c(.4, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
   scale_colour_manual(
     values = c(
@@ -166,7 +166,7 @@ p <- temp %>%
     show.legend = c(shape = TRUE, linetype = FALSE)
   ) +
   scale_shape_discrete(name = "Specification") +
-  scale_x_continuous(breaks = c(anes_years, 2020)) +
+  scale_x_continuous(breaks = anes_years) +
   scale_y_continuous(limits = c(.4, 1.0), breaks = seq(0.5, 1.0, 0.1)) +
   scale_colour_manual(
     values = c(
