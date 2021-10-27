@@ -167,9 +167,40 @@ perf %>%
 ## Baseline
 anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta")) %>%
   filter(VCF0004 != 1948 & !is.na(VCF0303))
+anes_2020 <- 
+  read_dta(here("data/anes/anes_timeseries_2020_stata_20210719.dta")) %>%
+  filter(V201231x %in% seq(7)) %>%
+  mutate(
+    pid3 = case_when(
+      V201231x %in% c(1, 2, 3) ~ 1,
+      V201231x == 4 ~ 2,
+      V201231x %in% c(5, 6, 7) ~ 3
+    )
+  )
 
-baseline_pid7 <- as.numeric(prop(anes, "VCF0301")) / 100
-sum(baseline_pid7 * baseline_pid7) ## 0.1533: 0.2667 - 0.1533 = 0.1134 increase
+baseline_pid3 <- baseline_pid7 <- list()
+for (year in anes_years) {
+  
+  if (year == 2020) {
+    temp <- as.numeric(prop(anes_2020, "V201231x")) / 100
+  } else {
+    temp <- as.numeric(prop(anes %>% filter(VCF0004 == year), "VCF0301")) / 100
+  }
+  
+  baseline_pid7[[paste0("year", year)]] <- sum(temp * temp)
+  
+  
+  if (year == 2020) {
+    temp <- as.numeric(prop(anes_2020, "pid3")) / 100
+  } else {
+    temp <- as.numeric(prop(anes %>% filter(VCF0004 == year), "VCF0303")) / 100
+  }
+  baseline_pid3[[paste0("year", year)]] <- sum(temp * temp)
+}
 
-baseline_pid3 <- as.numeric(prop(anes, "VCF0303")) / 100
-sum(baseline_pid3 * baseline_pid3) ## 0.4150: 0.5773 - 0.4150 = 0.1623 increase
+## Compare the difference
+temp <- perf %>% filter(Survey == "7-pt PID") %>% .$Accuracy
+mean(temp - (baseline_pid7 %>% unlist())) ## 0.1107
+
+temp <- perf %>% filter(Survey == "3-pt PID") %>% .$Accuracy
+mean(temp - (baseline_pid3 %>% unlist())) ## 0.1107
