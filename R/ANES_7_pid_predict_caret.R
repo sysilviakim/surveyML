@@ -116,12 +116,13 @@ for (yr in names(anes_onehot_pid)) {
     message("Random Forests finished.")
     
     ## Ordered choice, MASS polr (logistic)
-    method <- "ol"
-    turn.ol <- train_1line(temp, method = method, tc = tc, metric = "prAUC")
-    save(turn.ol, file = file_path_fxn(data = "ANES"))
-    rm(turn.ol)
-    gc(reset = TRUE)
-    message("Random Forests finished.")
-    
+    if (varset < 11) {
+      method <- "ol"
+      turn.ol <- train_1line(temp, method = method, tc = tc, metric = "prAUC")
+      save(turn.ol, file = file_path_fxn(data = "ANES"))
+      rm(turn.ol)
+      gc(reset = TRUE)
+      message("Random Forests finished.")
+    }
   }
 }
