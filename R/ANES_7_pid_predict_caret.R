@@ -1,8 +1,7 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "anes-tidy", "anes-vl.RData"))
-
-sfx <- "prezvote"
-load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
+sfx <- "pid"
+load(here("data", "anes-tidy", paste0("anes_pid.RData")))
 
 if (!dir.exists(here("output/ANES/ol"))) {
   dir.create(here("output/ANES/ol"), recursive = TRUE)
@@ -21,14 +20,14 @@ tc <- trainControl(
   savePredictions = "final"
 )
 
-for (yr in as.character(anes_years)) {
+for (yr in names(anes_onehot_pid)) {
   ## so that files are not overwritten
-  for (varset in seq(9, 10)) {
+  for (varset in seq(9, 11)) {
     if (yr == "2020") {
       load(here("data", "anes-tidy", "anes-vl-2020.RData"))
     }
     if (varset == 9) {
-      temp <- anes_onehot[[as.character(yr)]] %>%
+      temp <- anes_onehot_pid[[as.character(yr)]] %>%
         imap(
           ~ if (any(class(.x) == "data.frame")) {
             .x %>%
@@ -45,8 +44,8 @@ for (yr in as.character(anes_years)) {
             .x
           }
         )
-    } else {
-      temp <- anes_onehot[[as.character(yr)]] %>%
+    } else if (varset == 10) {
+      temp <- anes_onehot_pid[[as.character(yr)]] %>%
         imap(
           ~ if (any(class(.x) == "data.frame")) {
             .x %>%
@@ -58,6 +57,27 @@ for (yr in as.character(anes_years)) {
                   depvar,
                   levels = c(1, 2, 3),
                   labels = c("democrat", "independent", "republican")
+                )
+              ) %>%
+              select(contains(vl["set1"] %>% unlist() %>% paste(sep = "|")))
+          } else {
+            .x
+          }
+        )
+    } else {
+      temp <- anes_onehot_pid[[as.character(yr)]] %>%
+        imap(
+          ~ if (any(class(.x) == "data.frame")) {
+            .x %>%
+              select(-depvar) %>%
+              mutate(depvar = case_when(pid3 == 1 ~ 1, pid3 == 3 ~ 0)) %>%
+              select(depvar, everything()) %>%
+              filter(!is.na(depvar)) %>%
+              mutate(
+                depvar = factor(
+                  depvar,
+                  levels = c(0, 1),
+                  labels = c("republican", "democrat")
                 )
               ) %>%
               select(contains(vl["set1"] %>% unlist() %>% paste(sep = "|")))
