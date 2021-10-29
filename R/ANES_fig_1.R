@@ -16,10 +16,10 @@ perf <- list(
   bind_rows(
     ## # Import summarized performance (PID, 7-pt, rf)
     ., loadRData(
-      here("output/ANES/", paste0("perf_summ_ANES_prezvote_rf_pid.Rda"))
+      here("output/ANES/", paste0("perf_summ_ANES_pid_rf.Rda"))
     ) %>%
       rename(Set = Y) %>%
-      filter(Set == "3-pt PID") %>%
+      filter(Set == "Binary PID") %>%
       mutate(Survey = "ANES")
   )
 
@@ -53,10 +53,10 @@ perf <- list(
   bind_rows(
     ## # Import summarized performance (PID, 7-pt, rf)
     ., loadRData(
-      here("output/ANES/", paste0("perf_summ_ANES_prezvote_logit_pid.Rda"))
+      here("output/ANES/", paste0("perf_summ_ANES_pid_logit.Rda"))
     ) %>%
       rename(Set = Y) %>%
-      filter(Set == "3-pt PID") %>%
+      filter(Set == "Binary PID") %>%
       mutate(Survey = "ANES")
   )
 
