@@ -39,7 +39,7 @@ height <- 4
 plot_temp <- function(y = "pid7", ...) {
   p <- pdf_default(
     po_full(
-      perf %>% mutate(Set = "Demographics Only"), 
+      perf %>% mutate(Set = "Demographics Only"),
       breaks = anes_years,
       metric = metric, vdir = 1, colour_nrow = 1, linetype_nrow = 2, ...
     )
@@ -58,18 +58,21 @@ cross2(c("pid"), c("logit", "cart", "rf", "ol")) %>%
     ~ {
       summ_df <- seq(3) %>%
         map(
-          function(x) if (!(x == 3 & .x[[2]] == "ol")) {
-            perf_summ(perf, .x[[1]], .x[[2]], x)
+          function(x) {
+            if (!(x == 3 & .x[[2]] == "ol")) {
+              perf_summ(perf, .x[[1]], .x[[2]], x)
+            }
           }
         ) %>%
         bind_rows(.id = "Y") %>%
         mutate(
           Y = factor(
-            Y, levels = seq(3),
+            Y,
+            levels = seq(3),
             labels = c("7-pt PID", "3-pt PID", "Binary PID")
           )
         )
-      
+
       save(
         summ_df,
         file = here(
@@ -93,7 +96,7 @@ for (method in c("logit", "cart", "ol", "rf")) {
     temp <- c("7-pt PID", "3-pt PID", "Binary PID") %>%
       set_names(., nm = c("pid7", "pid3", "pid2"))
   }
-  
+
   ## TS performance ============================================================
   for (metric in c("Accuracy", "AUC", "prAUC")) {
     pdf(
@@ -138,33 +141,40 @@ for (method in c("logit", "cart", "ol", "rf")) {
         dev.off()
       }
     )
-  
+
   ## Average accuracy ==========================================================
   for (metric in c("Accuracy", "AUC", "prAUC")) {
     temp %>%
       imap(
         ~ {
-          x <- perf %>% filter(Survey == .x) %>% .$Accuracy %>% mean()
+          x <- perf %>%
+            filter(Survey == .x) %>%
+            .$Accuracy %>%
+            mean()
           write(
             round(x * 100, digits = 1),
             file = here(
-              "tab", "avg", 
-              paste0("ANES", "_avg_", .y, "_", tolower(metric), ".tex")
+              "tab", "avg",
+              paste0(
+                "ANES", "_avg_", .y, "_", tolower(metric), "_", tolower(method),
+                ".tex"
+              )
             )
           )
         }
       )
   }
-  
+
   ## Linear regression =========================================================
   for (metric in c("Accuracy", "AUC", "prAUC")) {
     temp %>%
       imap(
         ~ {
-          lm_out <- perf %>% filter(Survey == .x) %>%
+          lm_out <- perf %>%
+            filter(Survey == .x) %>%
             lm(sprintf("%s ~ Year", metric), data = .) %>%
             broom::tidy()
-          
+
           c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
             imap(
               function(x, y) {
@@ -196,8 +206,8 @@ for (method in c("logit", "cart", "ol", "rf")) {
                     file = here(
                       "tab", "reg",
                       paste0(
-                        "ANES", "_ts_", .y, "_", tolower(metric),
-                        "_slope_", y, ".tex"
+                        "ANES", "_ts_", .y, "_", tolower(metric), "_",
+                        tolower(method), "_slope_", y, ".tex"
                       )
                     )
                   )
@@ -218,7 +228,7 @@ anes <- read_dta(here("data/anes/anes_timeseries_cdf.dta")) %>%
       VCF0303 == 3 ~ 0
     )
   )
-anes_2020 <- 
+anes_2020 <-
   read_dta(here("data/anes/anes_timeseries_2020_stata_20210719.dta")) %>%
   filter(V201231x %in% seq(7)) %>%
   mutate(
@@ -243,14 +253,14 @@ for (year in anes_years) {
     temp <- as.numeric(prop(anes %>% filter(VCF0004 == year), "VCF0301")) / 100
   }
   baseline_pid7[[paste0("year", year)]] <- sum(temp * temp)
-  
+
   if (year == 2020) {
     temp <- as.numeric(prop(anes_2020, "pid3")) / 100
   } else {
     temp <- as.numeric(prop(anes %>% filter(VCF0004 == year), "VCF0303")) / 100
   }
   baseline_pid3[[paste0("year", year)]] <- sum(temp * temp)
-  
+
   if (year == 2020) {
     temp <- as.numeric(prop(anes_2020, "pid2", useNA = "no")) / 100
   } else {
@@ -263,23 +273,35 @@ for (year in anes_years) {
 perf <- loadRData(here("output", "ANES", "perf_summ_ANES_pid_rf.Rda")) %>%
   rename(Survey = Y)
 
-temp <- perf %>% filter(Survey == "7-pt PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "7-pt PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid7 %>% unlist())) ## 0.09485
 
-temp <- perf %>% filter(Survey == "3-pt PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "3-pt PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid3 %>% unlist())) ## 0.1371
 
-temp <- perf %>% filter(Survey == "Binary PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "Binary PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid2 %>% unlist())) ## 0.1183
 
 perf <- loadRData(here("output", "ANES", "perf_summ_ANES_pid_logit.Rda")) %>%
   rename(Survey = Y)
 
-temp <- perf %>% filter(Survey == "7-pt PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "7-pt PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid7 %>% unlist())) ## 0.09208
 
-temp <- perf %>% filter(Survey == "3-pt PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "3-pt PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid3 %>% unlist())) ## 0.1408
 
-temp <- perf %>% filter(Survey == "Binary PID") %>% .$Accuracy
+temp <- perf %>%
+  filter(Survey == "Binary PID") %>%
+  .$Accuracy
 mean(temp - (baseline_pid2 %>% unlist())) ## 0.1199
