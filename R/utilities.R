@@ -455,7 +455,7 @@ po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
 po_full <- function(x, metric, ylim = c(0.38, 1.0),
                     colour_nrow = 2, linetype_nrow = 2, end = 0.9, vdir = -1,
                     name = "Specification", accrange = FALSE, y2 = FALSE,
-                    breaks = seq(1952, 2016, by = 4)) {
+                    breaks = seq(1952, 2020, by = 4)) {
   if (length(unique(x$Survey)) > 1) {
     p <- ggplot(
       x,

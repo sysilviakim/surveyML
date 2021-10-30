@@ -26,7 +26,7 @@ perf <- list(
 ## Draw
 p <- po_full(
   perf, "Accuracy",
-  ylim = c(0, 1), name = "Y-var",
+  ylim = c(0, 1), name = "Outcome Variable",
   colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE, y2 = TRUE
 )
 p <- pdf_default(p) +
@@ -63,7 +63,7 @@ perf <- list(
 ## Draw
 p <- po_full(
   perf, "Accuracy",
-  ylim = c(0, 1), name = "Y-var",
+  ylim = c(0, 1), name = "Outcome Variable",
   colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE, y2 = TRUE
 )
 ## geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
