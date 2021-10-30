@@ -96,9 +96,10 @@ anes_onehot_2020 <- anes_2020 %>%
     -V202435,  ## Like-dislike presidential candidate (Dem)
     -V202436,  ## Like-dislike presidential candidate (Rep)
     -V201127,  ## Approval
-    -V201128   ## Approval (this question needs to be carefully coded, btw)
+    -V201128,  ## Approval (this question needs to be carefully coded, btw)
+    -V201129x  ## Another approval (job)
     ## Leave variables such as V201129x which ask about approval of 
-    ## specific tasks such as job, economy, foreign relations, ...
+    ## specific tasks such as economy, foreign relations, ...
   ) %>%
   mutate(
     pid7 = V201231x, 
