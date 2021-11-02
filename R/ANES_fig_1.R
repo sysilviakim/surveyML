@@ -16,17 +16,17 @@ perf <- list(
   bind_rows(
     ## # Import summarized performance (PID, 7-pt, rf)
     ., loadRData(
-      here("output/ANES/", paste0("perf_summ_ANES_prezvote_rf_pid.Rda"))
+      here("output/ANES/", paste0("perf_summ_ANES_pid_rf.Rda"))
     ) %>%
       rename(Set = Y) %>%
-      filter(Set == "3-pt PID") %>%
+      filter(Set == "Binary PID") %>%
       mutate(Survey = "ANES")
   )
 
 ## Draw
 p <- po_full(
   perf, "Accuracy",
-  ylim = c(0, 1), name = "Y-var",
+  ylim = c(0, 1), name = "Outcome Variable",
   colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE, y2 = TRUE
 )
 p <- pdf_default(p) +
@@ -53,17 +53,17 @@ perf <- list(
   bind_rows(
     ## # Import summarized performance (PID, 7-pt, rf)
     ., loadRData(
-      here("output/ANES/", paste0("perf_summ_ANES_prezvote_logit_pid.Rda"))
+      here("output/ANES/", paste0("perf_summ_ANES_pid_logit.Rda"))
     ) %>%
       rename(Set = Y) %>%
-      filter(Set == "3-pt PID") %>%
+      filter(Set == "Binary PID") %>%
       mutate(Survey = "ANES")
   )
 
 ## Draw
 p <- po_full(
   perf, "Accuracy",
-  ylim = c(0, 1), name = "Y-var",
+  ylim = c(0, 1), name = "Outcome Variable",
   colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE, y2 = TRUE
 )
 ## geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
