@@ -31,7 +31,7 @@ library(xtable)
 file_path_fxn <- function(data = "CCES") {
   here(
     "output", data,
-    method, paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
+    method, paste0(method, "_", yr, "_st", varset, ".Rda")
   )
 }
 
@@ -338,32 +338,32 @@ perf_routine <- function(method, x, test, dv, verbose = TRUE) {
   output[["f1"]] <- ROCR::performance(pred.compare, "f")
 
   if (verbose) {
-    message("Performance metrics for year ", yr, " ", sfx, ": ", output$auc)
+    message("Performance metrics for year ", yr, ": ", output$auc)
   }
 
   return(output)
 }
 
-perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
+perf_summ <- function(perf, method, set, yr = rev(seq(2006, 2018, 2))) {
   data.frame(
     Year = yr,
-    AUC = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC = perf %>% map(method) %>% map(set) %>%
       map(~ .x$auc) %>% unlist(),
-    AUC_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC_lower = perf %>% map(method) %>% map(set) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(1) %>% unlist(),
     ## map(2) ---> AUC
-    AUC_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC_upper = perf %>% map(method) %>% map(set) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(3) %>% unlist(),
-    Accuracy = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["Accuracy"]]) %>%
       unlist(),
-    Accuracy_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy_lower = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["AccuracyLower"]]) %>%
       unlist(),
-    Accuracy_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy_upper = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["AccuracyUpper"]]) %>%
       unlist(),
-    CI = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    CI = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall) %>%
       map(
         ~ paste0(
@@ -375,15 +375,15 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
         )
       ) %>%
       unlist(),
-    Precision = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Precision = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("Precision")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    Recall = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Recall = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("Recall")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    F1 = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    F1 = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("F1")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
@@ -930,8 +930,11 @@ set_labels <- c(
   paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues")) ## ,
   ## "Demographics Only"
 )
+
 anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
+anes_sets <- seq(9)
+
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
   "independent_republican", "weak_republican", "strong_republican"
