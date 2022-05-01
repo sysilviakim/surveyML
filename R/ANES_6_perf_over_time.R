@@ -1,41 +1,20 @@
 source(here::here("R", "utilities.R"))
-load(here("output/ANES/ANES_perf.RData"))
-load(here("output/ANES/ANES_varimp.RData"))
-
-# Summary Rda files ============================================================
-cross2(c("prezvote"), c("logit", "cart", "rf")) %>% ## , "house", "senate"
-  map(
-    ~ {
-      summ_df <- seq(8) %>%
-        map(
-          function(x) perf_summ(perf, .x[[1]], .x[[2]], x, yr = anes_years)
-        ) %>%
-        bind_rows(.id = "Set") %>%
-        mutate(Set = factor(Set, levels = seq(8), labels = set_labels))
-
-      save(
-        summ_df,
-        file = here(
-          "output", "ANES",
-          paste0("perf_summ_ANES_", .x[[1]], "_", .x[[2]], ".Rda")
-        )
-      )
-    }
-  )
+load(here("output/ANES/ANES_perf.Rda"))
+load(here("output/ANES/ANES_varimp.Rda"))
+load(here("output", "summ_list.Rda"))
 
 # SI figures ===================================================================
-cross2(c("prezvote"), seq(8)) %>% ## , "house", "senate"
-  map(setNames, c("yvar", "set")) %>%
+anes_sets %>%
   map(
-    function(x) {
+    ~ {
       pdf(
         here(
-          "fig", "ANES", paste0("ANES_perf_", x$yvar, "_set", x$set, ".pdf")
+          "fig", "ANES", paste0("ANES_perf_set", .x, ".pdf")
         ),
         width = 6, height = 5
       )
       grid_arrange_shared_legend(
-        list = roc_comparison(perf, yvar = x$yvar, set = x$set) %>%
+        list = roc_comparison(perf, set = .x) %>%
           imap(
             ~ pdf_default(.x + ggtitle(gsub("year", "", .y))) + 
               theme(
