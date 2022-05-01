@@ -904,11 +904,11 @@ set_labels <- c(
   "Demo. + South",
   "Demo. (Comprehensive)",
   "Demo. + Ideology"
-)[-4]
+)
 
 anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
-anes_sets <- seq(8)[-4]
+anes_sets <- seq(8)
 
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
