@@ -22,8 +22,8 @@ anes <- anes %>%
         .$var
     )
   ) %>%
-  ## limit the years of study
-  filter(VCF0004 %in% anes_years) %>%
+  ## limit the years of study ---> actually, need it for binary PID
+  ## filter(VCF0004 %in% anes_years) %>%
   mutate(
     VCF0130 = case_when(
       VCF0004 < 1972 ~ as.character(VCF0131),
