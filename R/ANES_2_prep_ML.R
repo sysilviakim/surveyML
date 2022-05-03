@@ -51,7 +51,7 @@ anes_onehot <- anes_list[as.character(anes_years)] %>%
   )
 save(anes_onehot, file = here("data", "anes-tidy", "anes_onehot_prez.Rda"))
 
-anes_onehot_pid <- within(anes_list) %>%
+anes_onehot_pid <- anes_list %>%
   map(
     ~ data_routine(
       .x %>% zap_labels() %>% mutate(dummy = row_number() %% 2),
