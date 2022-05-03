@@ -28,11 +28,18 @@ library(Kmisc) ## devtools::install_github("sysilviakim/Kmisc")
 library(xtable)
 
 ## Functions ===================================================================
-file_path_fxn <- function(data = "CCES") {
-  here(
-    "output", data,
-    method, paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
-  )
+file_path_fxn <- function(data = "CCES", pid = FALSE) {
+  if (pid) {
+    here(
+      "output", data,
+      method, paste0(method, "_", yr, "_st", varset, "_pid.Rda")
+    )
+  } else {
+    here(
+      "output", data,
+      method, paste0(method, "_", yr, "_st", varset, ".Rda")
+    )
+  }
 }
 
 one_hot <- function(df) {
@@ -127,38 +134,6 @@ data_routine <- function(df, dep, lvl, lbl, dbl = NULL, na = 999, seed = 100,
       index_robust = index0.5[, ]
     )
   )
-}
-
-fully_correlated_delete <- function(anes_onehot, anes_onehot_2020) {
-  df <- bind_rows(anes_onehot_2020$train, anes_onehot_2020$test) %>%
-    select(-depvar)
-  
-  tmp <- cor(df)
-  tmp[upper.tri(tmp)] <- 0
-  diag(tmp) <- 0
-  
-  tmp_new <- tmp[rowSums(is.na(tmp)) != ncol(tmp), ]
-  df_problem <- df[, apply(tmp, 2, function(x) any(abs(x) == 1, na.rm = TRUE))]
-  
-  ## Check manually
-  which(df %>% map_lgl(~ all(.x == df$v201011_2, na.rm = TRUE)))
-  ## v201011_2 and v201012_2
-  which(df %>% map_lgl(~ all(.x == df$v201116_8, na.rm = TRUE)))
-  
-  ## From each dataframe, delete columns in df_problem
-  anes_onehot[["2020"]] <- anes_onehot_2020 %>%
-    imap(
-      ~ {
-        if ("data.frame" %in% class(.x)) {
-          .x %>%
-            select(-names(df_problem))
-        } else {
-          .x
-        }
-      }
-    )
-  
-  return(anes_onehot)
 }
 
 p_font <- function(p, font, size) {
@@ -338,32 +313,32 @@ perf_routine <- function(method, x, test, dv, verbose = TRUE) {
   output[["f1"]] <- ROCR::performance(pred.compare, "f")
 
   if (verbose) {
-    message("Performance metrics for year ", yr, " ", sfx, ": ", output$auc)
+    message("Performance metrics for year ", yr, ": ", output$auc)
   }
 
   return(output)
 }
 
-perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
+perf_summ <- function(perf, method, set, yr = rev(seq(2006, 2018, 2))) {
   data.frame(
     Year = yr,
-    AUC = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC = perf %>% map(method) %>% map(set) %>%
       map(~ .x$auc) %>% unlist(),
-    AUC_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC_lower = perf %>% map(method) %>% map(set) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(1) %>% unlist(),
     ## map(2) ---> AUC
-    AUC_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    AUC_upper = perf %>% map(method) %>% map(set) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(3) %>% unlist(),
-    Accuracy = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["Accuracy"]]) %>%
       unlist(),
-    Accuracy_lower = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy_lower = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["AccuracyLower"]]) %>%
       unlist(),
-    Accuracy_upper = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Accuracy_upper = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall[["AccuracyUpper"]]) %>%
       unlist(),
-    CI = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    CI = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$overall) %>%
       map(
         ~ paste0(
@@ -375,15 +350,15 @@ perf_summ <- function(perf, dv, method, set, yr = rev(seq(2006, 2018, 2))) {
         )
       ) %>%
       unlist(),
-    Precision = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Precision = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("Precision")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    Recall = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    Recall = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("Recall")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    F1 = perf %>% map(dv) %>% map(method) %>% map(set) %>%
+    F1 = perf %>% map(method) %>% map(set) %>%
       map(~ .x$cf.matrix$byClass[c("F1")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
@@ -875,7 +850,7 @@ vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
     vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
-roc_comparison <- function(perf, yvar = "prezvote", set = 4,
+roc_comparison <- function(perf, set = 4,
                            levels = c("logit", "cart", "rf"),
                            labels = c("Logit", "CART", "RF"),
                            linetype = c("dotdash", "dashed", "solid"),
@@ -885,15 +860,13 @@ roc_comparison <- function(perf, yvar = "prezvote", set = 4,
     imap_dfr(
       function(x, y) {
         perf %>%
-          imap(yvar) %>%
           imap(x) %>%
-          imap(set) %>%
+          imap(paste0("set", set)) %>%
           imap(~ .x$perf) %>%
           imap_dfr(
             ~ tibble(method = x, x = .x@x.values[[1]], y = .x@y.values[[1]]),
             .id = "year"
-          ) %>%
-          mutate(yvar = yvar)
+          )
       }
     ) %>%
     mutate(method = factor(method, levels = levels, labels = labels))
@@ -927,11 +900,16 @@ options(
 set_labels <- c(
   "Demographics Only", "Demo. + PID", "Demo. + PID + Issues", "All Covariates",
   ## Appendix requested
-  paste0("Demo. + ", c("Religion", "South", "Ideology", "Issues")) ## ,
-  ## "Demographics Only"
+  "Demo. + Religion",
+  "Demo. + South",
+  "Demo. (Comprehensive)",
+  "Demo. + Ideology"
 )
+
 anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
+anes_sets <- seq(8)
+
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
   "independent_republican", "weak_republican", "strong_republican"
