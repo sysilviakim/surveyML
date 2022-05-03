@@ -1,10 +1,7 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "variable_labels.Rda"))
-vid <- perf <- list()
 
-sfx <- "pid"
-load(here("data", "anes-tidy", paste0("anes_", sfx, ".RData")))
-
+# Functions ====================================================================
 ## Because this is multiclass, not binary
 pred_df <- function(list, model, y = "depvar") {
   list$test$pred <- predict.train(model, newdata = list$test)
@@ -15,7 +12,7 @@ pred_df <- function(list, model, y = "depvar") {
   temp <- as.data.frame(temp) ## If tibble, levels(temp[, "pred"]) does not work
   return(
     list(
-      cf.matrix = 
+      cf.matrix =
         confusionMatrix(data = list$test$pred, reference = list$test[[y]]),
       pred = temp,
       multiclass = multiClassSummary(temp, lev = levels(list$test$depvar))
@@ -23,100 +20,195 @@ pred_df <- function(list, model, y = "depvar") {
   )
 }
 
-for (yr in names(anes_onehot_pid)) {
-  ## caret results
-  for (method in c("logit", "cart", "rf", "ol")) {
-    for (varset in seq(9, 11)) {
-      if (varset == 9) {
-        temp <- anes_onehot_pid[[as.character(yr)]] %>%
-          imap(
-            ~ if (any(class(.x) == "data.frame")) {
-              .x %>%
-                select(-depvar) %>%
-                select(depvar = pid7, everything()) %>%
-                filter(!is.na(depvar) & depvar %in% seq(7)) %>%
-                mutate(
-                  depvar = factor(depvar, levels = seq(7), labels = pid_labels)
-                )
-            } else {
-              .x
-            }
-          )
-      } else if (varset == 10) {
-        temp <- anes_onehot_pid[[as.character(yr)]] %>%
-          imap(
-            ~ if (any(class(.x) == "data.frame")) {
-              .x %>%
-                select(-depvar) %>%
-                select(depvar = pid3, everything()) %>%
-                filter(!is.na(depvar) & depvar %in% seq(3)) %>%
-                mutate(
-                  depvar = factor(
-                    depvar,
-                    levels = seq(3),
-                    labels = c("democrat", "independent", "republican")
+perf_summ <- function(perf, method, set, yr) {
+  data.frame(
+    Year = yr,
+    Accuracy = perf %>% map(method) %>% map(paste0("set", set)) %>%
+      map_dbl(~ .x$cf.matrix$overall[["Accuracy"]]),
+    Accuracy_lower = perf %>% map(method) %>%
+      map(paste0("set", set)) %>%
+      map_dbl(~ .x$cf.matrix$overall[["AccuracyLower"]]),
+    Accuracy_upper = perf %>% map(method) %>%
+      map(paste0("set", set)) %>%
+      map_dbl(~ .x$cf.matrix$overall[["AccuracyUpper"]]),
+    CI = perf %>% map(method) %>% map(paste0("set", set)) %>%
+      map(~ .x$cf.matrix$overall) %>%
+      map(
+        ~ paste0(
+          "[",
+          str_pad(round(.x[["AccuracyLower"]], digits = 4), 6, "right", "0"),
+          ", ",
+          str_pad(round(.x[["AccuracyUpper"]], digits = 4), 6, "right", "0"),
+          "]"
+        )
+      ) %>%
+      unlist(),
+    # AUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
+    #   map_dbl(~ .x$multiclass[["AUC"]]),
+    # prAUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
+    #   map_dbl(~ .x$multiclass[["prAUC"]]),
+    row.names = NULL
+  )
+}
+
+# Loop =========================================================================
+if (!file.exists(here("output/ANES/ANES_perf_pid.Rda"))) {
+  vid <- perf <- list()
+
+  load(here("data", "anes-tidy", "anes_onehot_pid.Rda"))
+  for (yr in setdiff(names(anes_onehot_pid), "1948")) {
+    ## caret results
+    for (method in c("logit", "cart", "rf")) {
+      for (varset in c(13, 14)) {
+        if (varset %in% seq(9, 10)) {
+          temp <- anes_onehot_pid[[as.character(yr)]] %>%
+            imap(
+              ~ if (any(class(.x) == "data.frame")) {
+                .x %>%
+                  select(-depvar) %>%
+                  select(depvar = pid7, everything()) %>%
+                  filter(!is.na(depvar) & depvar %in% seq(7)) %>%
+                  mutate(
+                    depvar = factor(
+                      depvar,
+                      levels = seq(7), labels = pid_labels
+                    )
                   )
-                )
-            } else {
-              .x
-            }
-          )
-      } else {
-        temp <- anes_onehot_pid[[as.character(yr)]] %>%
-          imap(
-            ~ if (any(class(.x) == "data.frame")) {
-              .x %>%
-                select(-depvar) %>%
-                mutate(depvar = case_when(pid3 == 1 ~ 1, pid3 == 3 ~ 0)) %>%
-                select(depvar, everything()) %>%
-                filter(!is.na(depvar)) %>%
-                mutate(
-                  depvar = factor(
-                    depvar,
-                    levels = c(0, 1),
-                    labels = c("republican", "democrat")
+              } else {
+                .x
+              }
+            )
+        } else if (varset %in% seq(11, 12)) {
+          temp <- anes_onehot_pid[[as.character(yr)]] %>%
+            imap(
+              ~ if (any(class(.x) == "data.frame")) {
+                .x %>%
+                  select(-depvar) %>%
+                  select(depvar = pid3, everything()) %>%
+                  filter(!is.na(depvar) & depvar %in% seq(3)) %>%
+                  mutate(
+                    depvar = factor(
+                      depvar,
+                      levels = seq(3),
+                      labels = c("democrat", "independent", "republican")
+                    )
                   )
-                )
-            } else {
-              .x
-            }
-          )
-      }
-      
-      if (!(method == "ol" & varset == 11)) {
+              } else {
+                .x
+              }
+            )
+        } else {
+          temp <- anes_onehot_pid[[as.character(yr)]] %>%
+            imap(
+              ~ if (any(class(.x) == "data.frame")) {
+                .x %>%
+                  select(-depvar) %>%
+                  mutate(depvar = case_when(pid3 == 1 ~ 1, pid3 == 3 ~ 0)) %>%
+                  select(depvar, everything()) %>%
+                  filter(!is.na(depvar)) %>%
+                  mutate(
+                    depvar = factor(
+                      depvar,
+                      levels = c(0, 1),
+                      labels = c("republican", "democrat")
+                    )
+                  )
+              } else {
+                .x
+              }
+            )
+        }
+
         ## Load previously run results
         load(
           here(
             "output", "ANES", method,
-            paste0(method, "_", yr, "_", sfx, "_st", varset, ".RData")
+            paste0(method, "_", yr, "_st", varset, "_pid.Rda")
           )
         )
-        
+
         ## Evaluate performance
-        perf[[paste0("year", yr)]][[sfx]][[method]][[paste0("set", varset)]] <-
+        perf[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
           pred_df(temp, eval(parse(text = paste0("turn.", method))))
-        
+
         ## Plot variable importance
         pdf_varimp(
           eval(parse(text = paste0("turn.", method))),
           here(
             "fig", "ANES", method,
-            paste0("var", method, "_", yr, "_", sfx, "_st", varset, ".pdf")
+            paste0("var", method, "_", yr, "_st", varset, "_pid.pdf")
           ),
           labels = vl[["anes"]],
           font = "CM Roman"
         )
-        
+
         vid_temp <- varImp(eval(parse(text = paste0("turn.", method))))
-        vid[[paste0("year", yr)]][[sfx]][[method]][[paste0("set", varset)]] <-
+        vid[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
           vid_temp$importance %>% Kmisc::rowid_matrix_to_df()
-        
+
         ## Save memory
         rm(list = paste0("turn.", method))
         gc(reset = TRUE)
-        save(perf, file = here("output/ANES/ANES_perf_pid.RData"))
-        save(vid, file = here("output/ANES/ANES_varimp_pid.RData"))
+        save(perf, file = here("output/ANES/ANES_perf_pid.Rda"))
+        save(vid, file = here("output/ANES/ANES_varimp_pid.Rda"))
       }
     }
   }
 }
+
+# xtable export ================================================================
+load(here("output/ANES/ANES_perf_pid.Rda"))
+load(here("output/ANES/ANES_varimp_pid.Rda"))
+
+summ_df_pid <- c("logit", "cart", "rf") %>%
+  set_names(., .) %>%
+  map(
+    ~ anes_sets_pid %>%
+      set_names(., .) %>%
+      map(
+        function(x) {
+          perf_summ(
+            perf, .x, x,
+            yr = setdiff(names(anes_onehot_pid), "1948")
+          )
+        }
+      ) %>%
+      bind_rows(.id = "Set") %>%
+      mutate(Year = as.numeric(Year)) %>%
+      arrange(desc(Year), Set) %>%
+      mutate(
+        Set = factor(Set, levels = anes_sets_pid, labels = set_labels_pid)
+      ) %>%
+      rename(`Variable Specification` = Set) %>%
+      select(-Accuracy_lower, -Accuracy_upper)
+  )
+
+# Quick check ==================================================================
+perf_df <- summ_df_pid$rf
+set_names(set_labels_pid, set_labels_pid) %>%
+  map(
+    ~ perf_df %>% 
+      filter(`Variable Specification` == .x) %>%
+      lm(Accuracy ~ Year, data = .) %>%
+      summary()
+  )
+
+set_names(set_labels, set_labels) %>%
+  map_dbl(
+    ~ perf_df %>% 
+      filter(`Variable Specification` == .x) %>%
+      .$Accuracy %>%
+      mean()
+  )
+
+p_list <- unique(perf$`Variable Specification`) %>%
+  set_names(., .) %>%
+  map(
+    ~ perf %>% 
+      filter(`Variable Specification` == .x) %>%
+      ggplot(.) + 
+      geom_line(aes(x = Year, y = Accuracy))
+  )
+
+vid %>% map(~ .x$rf$set7 %>% slice_max(Overall, n = 5))
+

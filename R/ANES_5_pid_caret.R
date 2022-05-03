@@ -3,10 +3,10 @@ load(here("data", "anes-tidy", "anes-vl.Rda"))
 vl$set7 <- c(vl$set1, vl$set7)
 load(here("data", "anes-tidy", "anes_onehot_pid.Rda"))
 
-if (!dir.exists(here("output/ANES/ol"))) {
-  dir.create(here("output/ANES/ol"), recursive = TRUE)
-  dir.create(here("fig/ANES/ol"), recursive = TRUE)
-}
+# if (!dir.exists(here("output/ANES/ol"))) {
+#   dir.create(here("output/ANES/ol"), recursive = TRUE)
+#   dir.create(here("fig/ANES/ol"), recursive = TRUE)
+# }
 
 tc <- trainControl(
   method = "cv",
@@ -22,7 +22,7 @@ tc <- trainControl(
 
 ## so that files are not overwritten
 for (varset in seq(9, 14)) {
-  for (yr in names(anes_onehot_pid)) {
+  for (yr in setdiff(names(anes_onehot_pid), "1948")) {
     if (varset %in% seq(9, 10)) {
       ## 7-point party ID
       temp <- anes_onehot_pid[[as.character(yr)]] %>%
