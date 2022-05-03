@@ -1,7 +1,7 @@
 source(here::here("R", "utilities.R"))
 
 # Import/export data ===========================================================
-## 59,944 rows, 1,029(!) variables
+## 68,224 rows, 1,030(!) variables
 anes <- read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta"))
 anes_labels <- stata_varlabel_df(anes)
 
@@ -25,11 +25,13 @@ anes <- anes %>%
   ## limit the years of study ---> actually, need it for binary PID
   ## filter(VCF0004 %in% anes_years) %>%
   mutate(
-    VCF0130 = case_when(
-      VCF0004 < 1972 ~ as.character(VCF0131),
-      TRUE ~ as.character(VCF0130)
+    VCF0130b = case_when(
+      VCF0004 < 1972 ~ as.double(as.character(VCF0131)),
+      TRUE ~ as.double(as.character(VCF0130))
     )
-  )
+  ) %>%
+  ## year-limited church attendance variables
+  select(-VCF0130, -VCF0131, -VCF0130a)
 
 anes_labels <- stata_varlabel_df(anes)
 
@@ -104,8 +106,7 @@ vl <- list(
   ## demo. + religion: church attendance recoded from 1970 on, so two sep. var
   set5 = c(
     "VCF0128", ## religion major group
-    "VCF0131", ## church attendance 1952-1968
-    "VCF0130" ## church attendance 1970~
+    "VCF0130b" ## church attendance all years
   ),
   ## demo. + south
   set6 = "VCF0113",
@@ -116,8 +117,7 @@ vl <- list(
     "VCF0113", ## political south/nonsouth
     "VCF0118", ## work status 5-category
     "VCF0128", ## religion major group
-    ## "VCF0131", ## church attendance 1952-1968 ---> now pasted
-    "VCF0130", ## church attendance 1970~
+    "VCF0130b", ## church attendance all years
     "VCF0146", ## home ownership
     "VCF0147" ## marital status
   ),
@@ -137,6 +137,6 @@ table(anes$VCF0004, anes$VCF0112)
 table(anes$VCF0004, anes$VCF0113)
 table(anes$VCF0004, anes$VCF0114)
 table(anes$VCF0004, anes$VCF0128)
-table(anes$VCF0004, anes$VCF0130) ## by design starting 1972, so fixed manually
+table(anes$VCF0004, anes$VCF0130b) ## by design starting 1972, so fixed manually
 table(anes$VCF0004, anes$VCF0146)
 table(anes$VCF0004, anes$VCF0147)
