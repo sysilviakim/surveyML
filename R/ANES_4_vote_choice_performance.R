@@ -6,52 +6,54 @@ if (!dir.exists(here("tab", "perf"))) {
 }
 
 ## Extract performance measures ================================================
-vid <- perf <- list()
-
-load(here("data", "anes-tidy", "anes_onehot_prez.Rda"))
-for (yr in as.character(anes_years)) {
-  temp <- anes_onehot[[as.character(yr)]]
-
-  ## caret results
-  for (method in c("logit", "cart", "rf")) {
-    for (varset in anes_sets) {
-      ## Load previously run results
-      load(
-        here(
-          "output", "ANES", method,
-          paste0(method, "_", yr, "_st", varset, ".Rda")
+if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
+  vid <- perf <- list()
+  
+  load(here("data", "anes-tidy", "anes_onehot_prez.Rda"))
+  for (yr in as.character(anes_years)) {
+    temp <- anes_onehot[[as.character(yr)]]
+    
+    ## caret results
+    for (method in c("logit", "cart", "rf")) {
+      for (varset in anes_sets) {
+        ## Load previously run results
+        load(
+          here(
+            "output", "ANES", method,
+            paste0(method, "_", yr, "_st", varset, ".Rda")
+          )
         )
-      )
-
-      ## Evaluate performance
-      perf[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
-        perf_routine(
-          method,
+        
+        ## Evaluate performance
+        perf[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
+          perf_routine(
+            method,
+            eval(parse(text = paste0("turn.", method))),
+            temp$test,
+            dv = levels(temp$test$depvar)
+          )
+        
+        ## Plot variable importance
+        pdf_varimp(
           eval(parse(text = paste0("turn.", method))),
-          temp$test,
-          dv = levels(temp$test$depvar)
+          here(
+            "fig", "ANES", method,
+            paste0("var", method, "_", yr, "_st", varset, ".pdf")
+          ),
+          labels = vl[["anes"]],
+          font = "CM Roman"
         )
-
-      ## Plot variable importance
-      pdf_varimp(
-        eval(parse(text = paste0("turn.", method))),
-        here(
-          "fig", "ANES", method,
-          paste0("var", method, "_", yr, "_st", varset, ".pdf")
-        ),
-        labels = vl[["anes"]],
-        font = "CM Roman"
-      )
-
-      vid_temp <- varImp(eval(parse(text = paste0("turn.", method))))
-      vid[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
-        vid_temp$importance %>% Kmisc::rowid_matrix_to_df()
-
-      ## Save memory
-      rm(list = paste0("turn.", method))
-      gc(reset = TRUE)
-      save(perf, file = here("output/ANES/ANES_perf.Rda"))
-      save(vid, file = here("output/ANES/ANES_varimp.Rda"))
+        
+        vid_temp <- varImp(eval(parse(text = paste0("turn.", method))))
+        vid[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
+          vid_temp$importance %>% Kmisc::rowid_matrix_to_df()
+        
+        ## Save memory
+        rm(list = paste0("turn.", method))
+        gc(reset = TRUE)
+        save(perf, file = here("output/ANES/ANES_perf.Rda"))
+        save(vid, file = here("output/ANES/ANES_varimp.Rda"))
+      }
     }
   }
 }
@@ -138,3 +140,32 @@ print(
   file = here("tab", "perf", paste0("ANES_prezvote_accuracy.tex")),
   booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
 )
+
+# Quick check ==================================================================
+perf_df <- summ_df$rf
+set_names(set_labels, set_labels) %>%
+  map(
+    ~ perf_df %>% 
+      filter(`Variable Specification` == .x) %>%
+      lm(Accuracy ~ Year, data = .) %>%
+      summary()
+  )
+
+set_names(set_labels, set_labels) %>%
+  map_dbl(
+    ~ perf_df %>% 
+      filter(`Variable Specification` == .x) %>%
+      .$Accuracy %>%
+      mean()
+  )
+
+p_list <- unique(perf$`Variable Specification`) %>%
+  set_names(., .) %>%
+  map(
+    ~ perf %>% 
+      filter(`Variable Specification` == .x) %>%
+      ggplot(.) + 
+      geom_line(aes(x = Year, y = Accuracy))
+  )
+
+vid %>% map(~ .x$rf$set7 %>% slice_max(Overall, n = 5))

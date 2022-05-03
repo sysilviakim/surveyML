@@ -9,7 +9,7 @@ if (!dir.exists(here("output/ANES/logit"))) {
 
 load(here("data", "anes-tidy", "anes_onehot_prez.Rda"))
 ## essentially anes_sets, just ordered for convenience
-for (varset in c(1, 7, 2, 3, 4, 5, 6, 8)) {
+for (varset in anes_sets) {
   for (yr in as.character(anes_years)) {
     temp <- anes_onehot[[as.character(yr)]] %>%
       imap(
