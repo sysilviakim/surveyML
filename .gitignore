@@ -72,7 +72,13 @@ tab/old/*
 *varcart*
 *varlogit*
 fig/Nationscape/*
-output/*
+
+output/rf/*
+output/cart/*
+output/logit/*
+output/ol/*
+output/*.RData
+
 writeup/*.pdf
 doc/*.pdf
 fig/*.mp4
