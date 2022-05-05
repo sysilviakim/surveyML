@@ -49,10 +49,10 @@ one_hot <- function(df) {
 }
 
 stata_varlabel_df <- function(x) {
-  x %>% 
+  x %>%
     map(~ attr(.x, "label")) %>%
     map(~ tibble(label = .x)) %>%
-    map_df(rownames_to_column, .id = 'var') %>%
+    map_df(rownames_to_column, .id = "var") %>%
     select(-rowname)
 }
 
@@ -226,22 +226,25 @@ train_1line <- function(temp, metric = "ROC", method = "rpart", tc = NULL,
     xdat <- temp$train %>%
       ## no variation variables dropped
       select(-setdiff(names(temp$train), c(names(strt), "depvar")))
-    
-    ## Error in optim(s0, fmin, gmin, method = "BFGS", ...) : 
+
+    ## Error in optim(s0, fmin, gmin, method = "BFGS", ...) :
     ## initial value in 'vmmin' is not finite
     out <- NULL
-    tryCatch({
-      out <- train(
-        as.factor(depvar) ~ .,
-        metric = metric,
-        method = "polr",
-        trControl = tc,
-        data = xdat,
-        start = strt
-      )
-    }, error = function (e) {
-      message(e)
-    })
+    tryCatch(
+      {
+        out <- train(
+          as.factor(depvar) ~ .,
+          metric = metric,
+          method = "polr",
+          trControl = tc,
+          data = xdat,
+          start = strt
+        )
+      },
+      error = function(e) {
+        message(e)
+      }
+    )
     if (is.null(out)) {
       out <- train(
         as.factor(depvar) ~ .,
@@ -322,23 +325,23 @@ perf_routine <- function(method, x, test, dv, verbose = TRUE) {
 perf_summ <- function(perf, method, set, yr = rev(seq(2006, 2018, 2))) {
   data.frame(
     Year = yr,
-    AUC = perf %>% map(method) %>% map(set) %>%
+    AUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$auc) %>% unlist(),
-    AUC_lower = perf %>% map(method) %>% map(set) %>%
+    AUC_lower = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(1) %>% unlist(),
     ## map(2) ---> AUC
-    AUC_upper = perf %>% map(method) %>% map(set) %>%
+    AUC_upper = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$ci.auc.bootstrap) %>% map(3) %>% unlist(),
-    Accuracy = perf %>% map(method) %>% map(set) %>%
+    Accuracy = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$overall[["Accuracy"]]) %>%
       unlist(),
-    Accuracy_lower = perf %>% map(method) %>% map(set) %>%
+    Accuracy_lower = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$overall[["AccuracyLower"]]) %>%
       unlist(),
-    Accuracy_upper = perf %>% map(method) %>% map(set) %>%
+    Accuracy_upper = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$overall[["AccuracyUpper"]]) %>%
       unlist(),
-    CI = perf %>% map(method) %>% map(set) %>%
+    CI = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$overall) %>%
       map(
         ~ paste0(
@@ -350,54 +353,20 @@ perf_summ <- function(perf, method, set, yr = rev(seq(2006, 2018, 2))) {
         )
       ) %>%
       unlist(),
-    Precision = perf %>% map(method) %>% map(set) %>%
+    Precision = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$byClass[c("Precision")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    Recall = perf %>% map(method) %>% map(set) %>%
+    Recall = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$byClass[c("Recall")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
-    F1 = perf %>% map(method) %>% map(set) %>%
+    F1 = perf %>% map(method) %>% map(paste0("set", set)) %>%
       map(~ .x$cf.matrix$byClass[c("F1")]) %>%
       map(~ round(.x, digits = 4)) %>%
       unlist(),
     row.names = NULL
   )
-}
-
-vi_fin <- function(x, names = "Demographics", yrs = seq(1952, 2020, by = 4),
-                   lvl = c("Black", "Hispanic", "Gender", "Age")) {
-  x %>%
-    bind_rows(.id = "Year") %>%
-    mutate(Year = as.integer(gsub("year", "", Year))) %>%
-    pivot_longer(
-      -Year,
-      names_to = names, values_to = "Variable Importance"
-    ) %>%
-    mutate(
-      !!as.name(names) := factor(!!as.name(names), levels = lvl)
-    ) %>%
-    ggplot(
-      aes(
-        x = Year, y = `Variable Importance`, group = !!as.name(names),
-        colour = !!as.name(names), fill = !!as.name(names),
-        linetype = !!as.name(names)
-      )
-    ) +
-    scale_x_continuous(breaks = yrs) +
-    geom_line() +
-    scale_color_discrete() +
-    scale_linetype_discrete()
-}
-
-vi_bottom <- function(p, nrow = 2, key = 1, kh = .5) {
-  p +
-    theme(legend.position = "bottom", legend.key.width = unit(key, "cm")) +
-    guides(
-      colour = guide_legend(nrow = nrow, byrow = TRUE, keyheight = kh),
-      linetype = guide_legend(nrow = nrow, byrow = TRUE, keyheight = kh)
-    )
 }
 
 po_plot <- function(x, metric, years = seq(2008, 2020, by = 2),
@@ -448,17 +417,17 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
   ## If two y-variables, as in edited manuscript
   if (y2) {
     p <- ggplot(
-      x, aes(x = Year,  y = !!as.name(metric), colour = Set, shape = Set)
+      x, aes(x = Year, y = !!as.name(metric), colour = Set, shape = Set)
     )
   }
-  
+
   if (accrange) {
     p <- p + geom_pointrange(aes(ymin = Accuracy_lower, ymax = Accuracy_upper))
   } else {
     p <- p +
       geom_line(size = 1)
   }
-  
+
   p <- p +
     geom_point(aes(shape = Set)) +
     scale_shape_discrete(name = name) +
@@ -471,7 +440,7 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
 
   if (length(unique(x$Survey)) > 1) {
     lty <- c("solid", "dashed", "dotdash", "dotted")
-    
+
     p <- p +
       scale_linetype_manual(
         name = "Survey", values = lty[seq(length(unique(x$Survey)))]
@@ -486,368 +455,6 @@ po_full <- function(x, metric, ylim = c(0.38, 1.0),
   p <- p +
     scale_y_continuous(limits = ylim)
   return(p)
-}
-
-# Within-year, between-set intersection fxn
-vi_inter_btw <- function(x, y = 1, from = 1, to = 4, top = 20,
-                         pid_vec, educ_vec, survey = "CCES") {
-  out <- x %>%
-    map(y) %>%
-    map("rf") %>%
-    map(
-      ~ Reduce(
-        intersect,
-        .x %>%
-          map(
-            function(x) {
-              x %>%
-                arrange(desc(Overall)) %>%
-                slice_head(n = top) %>%
-                .$rownames
-            }
-          ) %>%
-          .[from:to]
-      )
-    ) %>%
-    map(
-      ~ tibble(x := .x) %>%
-        t() %>%
-        as_tibble(.name_repair = "unique") %>%
-        # Adjusting to new .name_repair conventions
-        rename_all(~ gsub("...", "V", .x))
-    ) %>%
-    bind_rows(.id = "Year") %>%
-    mutate(Year = gsub("year", "", Year))
-
-  if (survey == "CCES") {
-    out <- out %>%
-      mutate_all(~ if_else(. %in% c("gender.2", "V208.2"), "Gender", .)) %>%
-      mutate_all(~ if_else(. %in% c("birthyr", "V207", "v207"), "Age", .)) %>%
-      mutate_all(
-        ~ if_else(. %in% c("race.2", "V211.2", "v211_black"), "Black", .)
-      ) %>%
-      mutate_all(~ if_else(. %in% c("race.3", "V211.3"), "Hispanic", .)) %>%
-      mutate_all(
-        ~ if_else(
-          . %in% paste0(pid_vec, ".2"), "Not very strong Democrat",
-          if_else(
-            . %in% paste0(pid_vec, ".3"), "Lean Democrat",
-            if_else(
-              . %in% paste0(pid_vec, ".4"), "Independent",
-              if_else(
-                . %in% paste0(pid_vec, ".5"), "Lean Republican",
-                if_else(
-                  . %in% paste0(pid_vec, ".6"), "Not very strong Republican",
-                  if_else(
-                    . %in% paste0(pid_vec, ".7"), "Strong Republican", .
-                  )
-                )
-              )
-            )
-          )
-        )
-      ) %>%
-      mutate_all(
-        ~ if_else(
-          . %in% paste0(educ_vec, ".2"), "High school graduate",
-          if_else(
-            . %in% c(paste0(educ_vec, ".3"), "v213_some_college"),
-            "Some college",
-            if_else(
-              . %in% c(paste0(educ_vec, ".4"), "v213_2_year"), "2-year college",
-              if_else(
-                . %in% c(paste0(educ_vec, ".5"), "v213_4_year"),
-                "4-year college",
-                if_else(
-                  . %in% paste0(educ_vec, ".6"), "Post-grad", .
-                )
-              )
-            )
-          )
-        )
-      )
-  } else if (survey == "ANES") {
-    out <- out %>%
-      mutate_all(~ if_else(. %in% c("vcf0104_2"), "Gender", .)) %>%
-      mutate_all(~ if_else(. %in% c("vcf0101"), "Age", .)) %>%
-      mutate_all(~ if_else(. %in% c("vcf0105b_2"), "Black", .)) %>%
-      mutate_all(~ if_else(. %in% c("vcf0105b_3"), "Hispanic", .)) %>%
-      mutate_all(~ if_else(. %in% c("vcf0105b_4"), "Other Race", .)) %>%
-      mutate_all(
-        ~ if_else(
-          . %in% paste0(pid_vec, "_2"), "Not very strong Democrat",
-          if_else(
-            . %in% paste0(pid_vec, "_3"), "Lean Democrat",
-            if_else(
-              . %in% paste0(pid_vec, "_4"), "Independent",
-              if_else(
-                . %in% paste0(pid_vec, "_5"), "Lean Republican",
-                if_else(
-                  . %in% paste0(pid_vec, "_6"), "Not very strong Republican",
-                  if_else(
-                    . %in% paste0(pid_vec, "_7"), "Strong Republican", .
-                  )
-                )
-              )
-            )
-          )
-        )
-      ) %>%
-      mutate_all(
-        ~ if_else(
-          . %in% paste0(educ_vec, "_2"), "High school graduate",
-          if_else(
-            . %in% c(paste0(educ_vec, "_3")), "Some college",
-            if_else(
-              . %in% c(paste0(educ_vec, "_4")), "2-year college",
-              if_else(
-                . %in% c(paste0(educ_vec, "_5")), "4-year college",
-                if_else(
-                  . %in% paste0(educ_vec, "_6"), "Post-grad", .
-                )
-              )
-            )
-          )
-        )
-      ) %>%
-      mutate_all(
-        ~ if_else(
-          . %in% c("vcf0114_2"), "Income: 17-33 %tile",
-          if_else(
-            . %in% c("vcf0114_3"), "Income: 34-67 %tile",
-            if_else(
-              . %in% c("vcf0114_4"), "Income: 68-95 %tile",
-              if_else(
-                . %in% c("vcf0114_5"), "Income: 96-100 %tile",
-                if_else(
-                  . %in% c("vcf0114_999"), "Income: refused", .
-                )
-              )
-            )
-          )
-        )
-      )
-  }
-  return(out)
-}
-
-# Between-year, within-set intersection fxn
-vi_inter_within <- function(x, y = 1, set = 4, top = 20) {
-  x %>%
-    map(y) %>%
-    map("rf") %>%
-    map(set) %>%
-    map(
-      ~ .x %>%
-        arrange(desc(Overall)) %>%
-        slice_head(n = top) %>%
-        .$rownames
-    )
-  ## Much more manual tagging, I'm afraid.
-}
-
-# Varimp over time fxns (CCES)
-vi_ts_demo <- function(x, y = 1, set = 4, method = "rf",
-                       names = "Demo.", yrs = seq(2008, 2018, by = 2)) {
-  x %>%
-    map(y) %>%
-    map(method) %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(
-            rownames %in% c("gender.2", "v208_female", "V208.2", "v2004.2")
-          ) %>%
-          select(Gender = Overall),
-        .x %>%
-          filter(rownames %in% c("birthyr", "V207", "v207")) %>%
-          select(Age = Overall),
-        .x %>%
-          filter(rownames %in% c("race.2", "V211.2", "v211_black")) %>%
-          select(Black = Overall),
-        .x %>%
-          filter(rownames %in% c("race.3", "V211.3", "v211_hispanic")) %>%
-          select(Hispanic = Overall)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs)
-}
-
-vi_ts_edu <- function(x, y = 1, set = 4, method = "rf",
-                      names = "Demo.", yrs = seq(2008, 2018, by = 2),
-                      lvl = c(
-                        "HS Graduate", "Some College",
-                        "2-year", "4-year", "Post-grad"
-                      )) {
-  x %>%
-    map(y) %>%
-    map(method) %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(
-            rownames %in% c("educ.2", "v213_high_school_graduate", "V213.2")
-          ) %>%
-          select(`HS Graduate` = Overall),
-        .x %>%
-          filter(rownames %in% c("educ.3", "v213_some_college", "V213.3")) %>%
-          select(`Some College` = Overall),
-        .x %>%
-          filter(rownames %in% c("educ.4", "v213_2_year", "V213.4")) %>%
-          select(`2-year` = Overall),
-        .x %>%
-          filter(rownames %in% c("educ.5", "v213_4_year", "V213.5")) %>%
-          select(`4-year` = Overall),
-        .x %>%
-          filter(rownames %in% c("educ.6", "v213_post_grad", "V213.6")) %>%
-          select(`Post-grad` = Overall)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs, lvl = lvl)
-}
-
-vi_ts_pid <- function(x, y = 1, set = 4, method = "rf", names = "PID",
-                      yrs = seq(2008, 2018, by = 2),
-                      lvl = rev(c(
-                        "Weak Democrat", "Lean Democrat", "Independent",
-                        "Lean Republican", "Weak Republican",
-                        "Strong Republican"
-                      ))) {
-  x %>%
-    map(y) %>%
-    map(method) %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(
-            rownames %in% c(
-              "pid7.2", "v212d_not_very_strong_democrat", "CC307a.2"
-            )
-          ) %>%
-          select(`Weak Democrat` = Overall), ## Not very strong Democrat
-        .x %>%
-          filter(
-            rownames %in% c("pid7.3", "v212d_lean_democrat", "CC307a.3")
-          ) %>%
-          select(`Lean Democrat` = Overall),
-        .x %>%
-          filter(
-            rownames %in% c("pid7.4", "v212d_independent", "CC307a.4")
-          ) %>%
-          select(`Independent` = Overall),
-        .x %>%
-          filter(
-            rownames %in% c("pid7.5", "v212d_lean_republican", "CC307a.5")
-          ) %>%
-          select(`Lean Republican` = Overall),
-        .x %>%
-          filter(
-            rownames %in% c(
-              "pid7.6", "v212d_not_very_strong_democrat", "CC307a.6"
-            )
-          ) %>%
-          select(`Weak Republican` = Overall), ## Not very strong Republican
-        .x %>%
-          filter(
-            rownames %in% c("pid7.7", "v212d_strong_democrat", "CC307a.7")
-          ) %>%
-          select(`Strong Republican` = Overall)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs, lvl = lvl)
-}
-
-# Varimp over time fxns (ANES)
-vi_ts_demo2 <- function(x, y = 1, set = 4, method = "rf",
-                        names = "Demographics", yrs = seq(1952, 2020, by = 4)) {
-  x %>%
-    map(y) %>%
-    map(method) %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(grepl("vcf0104_2|v201600", rownames)) %>% 
-          select(Gender = Overall),
-        .x %>%
-          filter(grepl("vcf0101|v201507x", rownames)) %>% 
-          select(Age = Overall),
-        .x %>%
-          filter(grepl("vcf0105b_2|v201549x_2", rownames)) %>%
-          select(Black = Overall),
-        ## For some years, race beyond white and black not there
-        .x %>%
-          filter(grepl("vcf0105b_3|v201549x_3", rownames)) %>%
-          select(Hispanic = Overall) %>%
-          bind_rows(., data.frame(Hispanic = NA)) %>%
-          slice(1)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs)
-}
-
-vi_ts_edu2 <- function(x, y = 1, set = 4, method = "rf",
-                       names = "Demographics", yrs = seq(1952, 2020, by = 4),
-                       lvl = c(
-                         "HS Graduate", "Some College", "College+"
-                       )) {
-  x %>%
-    map(y) %>%
-    map(method) %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(grepl("vcf0110_2|v201510_2", rownames)) %>%
-          select(`HS Graduate` = Overall),
-        .x %>%
-          filter(grepl("vcf0110_3|v201510_3", rownames)) %>%
-          select(`Some College` = Overall),
-        .x %>%
-          filter(grepl("vcf0110_4|v201510_4", rownames)) %>%
-          select(`College+` = Overall)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs, lvl = lvl)
-}
-
-vi_ts_pid2 <- function(x, y = 1, set = 4, names = "PID",
-                       yrs = seq(1952, 2020, by = 4),
-                       lvl = rev(c(
-                         "Weak Democrat", "Lean Democrat", "Independent",
-                         "Lean Republican", "Weak Republican",
-                         "Strong Republican"
-                       ))) {
-  x %>%
-    map(y) %>%
-    map("rf") %>%
-    map(set) %>%
-    map(
-      ~ bind_cols(
-        .x %>%
-          filter(grepl("vcf0301_2|v201231x_2", rownames)) %>%
-          select(`Weak Democrat` = Overall),
-        .x %>%
-          filter(grepl("vcf0301_3|v201231x_3", rownames)) %>%
-          select(`Lean Democrat` = Overall),
-        .x %>%
-          filter(grepl("vcf0301_4|v201231x_4", rownames)) %>%
-          select(`Independent` = Overall),
-        .x %>%
-          filter(grepl("vcf0301_5|v201231x_5", rownames)) %>%
-          select(`Lean Republican` = Overall),
-        .x %>%
-          filter(grepl("vcf0301_6|v201231x_6", rownames)) %>%
-          select(`Weak Republican` = Overall),
-        .x %>%
-          filter(grepl("vcf0301_7|v201231x_7", rownames)) %>%
-          select(`Strong Republican` = Overall)
-      )
-    ) %>%
-    vi_fin(names = names, yrs = yrs, lvl = lvl)
 }
 
 roc_comparison <- function(perf, set = 4,
@@ -902,7 +509,7 @@ set_labels <- c(
   ## Appendix requested
   "Demo. + Religion",
   "Demo. + South",
-  "Demo. (Comprehensive)",
+  "Demo. Only, Broader Definition",
   "Demo. + Ideology"
 )
 
@@ -913,6 +520,13 @@ anes_sets <- seq(8)
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
   "independent_republican", "weak_republican", "strong_republican"
+)
+
+anes_sets_pid <- seq(9, 14)
+set_labels_pid <- c(
+  "7-pt PID, Demographics Only", "7-pt PID, Demo. Only, Broader Definition",
+  "3-pt PID, Demographics Only", "3-pt PID, Demo. Only, Broader Definition",
+  "Binary PID, Demographics Only", "Binary PID, Demo. Only, Broader Definition"
 )
 
 ### Jan's fit_control_basic equivalent
