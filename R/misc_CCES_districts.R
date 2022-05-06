@@ -4,7 +4,7 @@ library(broom)
 library(here)
 
 # Import data
-cces <- read_dta("~/Downloads/cumulative_2006-2021.dta") %>%
+cces <- read_dta("data/cces/cumulative_2006-2021.dta") %>%
   filter(year %in% c(2010:2020))
 
 cces <- cces %>%

@@ -1,9 +1,9 @@
-# Import data
 library(tidyverse)
 library(haven)
 library(broom)
 library(here)
 
+# Import data
 anes <- read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta"))
 
 # Prepare data for specifications 1 and 2
