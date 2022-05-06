@@ -1,8 +1,29 @@
 source(here::here("R", "utilities.R"))
 load(here("output", "summ_list.Rda"))
 load(here("output", "summ_list_pid.Rda"))
-methods <- c("logit", "cart", "rf") %>% set_names(., .)
+load(here("output/ANES/ANES_perf.Rda"))
 
+# Settings =====================================================================
+width <- 6.2
+height <- 4
+plot_temp <- function(df, sets = seq(4), ...) {
+  p <- pdf_default(
+    po_full(
+      df[["rf"]] %>% 
+        rename(Set = `Variable Specification`) %>%
+        filter(Set %in% set_labels[sets]),
+      metric = metric, vdir = 1, ...
+    )
+  ) +
+    theme(legend.position = "bottom", legend.key.width = unit(.9, "cm")) +
+    scale_y_continuous(limits = c(0.4, 1))
+  if (metric != "Accuracy" & metric != "AUC") {
+    p <- p + scale_y_continuous(limits = c(0, 1))
+  }
+  return(p)
+}
+
+# Performance summary in list ==================================================
 perf_list <- methods %>%
   map(
     ~ bind_rows(
@@ -15,7 +36,7 @@ perf_list <- methods %>%
       filter(`Variable Specification` == "Demographics Only")
   )
 
-# Fig 1A and 1B ================================================================
+# Fig 1A and 1B: Demo Accuracy, 2 y-variables ==================================
 methods %>%
   map(
     ~ {
@@ -37,8 +58,15 @@ methods %>%
     }
   )
 
-
-# Logit (Fig 1B) ===============================================================
+# Fig 3: Performance measures over time ========================================
+for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
+  pdf(
+    here("fig", paste0("survey_votechoice_rf_", tolower(metric), "_ts.pdf")),
+    width = width, height = height
+  )
+  print(plot_temp(summ_df))
+  dev.off()
+}
 
 # SI figures (Vote Choice ROC) =================================================
 anes_sets %>%
@@ -66,3 +94,49 @@ anes_sets %>%
       dev.off()
     }
   )
+
+# SI figures (alternative demo. only) ==========================================
+for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
+  pdf(
+    here("fig", paste0("survey_rf_", tolower(metric), "_ts_pid_ideology.pdf")),
+    width = width, height = (height + 0.5)
+  )
+  print(
+    # https://www.datanovia.com/en/blog/the-a-z-of-rcolorbrewer-palette/
+    plot_temp(sets = c(2, 3, 8), colour_nrow = 3, end = 1) +
+      scale_colour_manual(
+        values = c(
+          # Force as the third scale in the default figure
+          viridisLite::viridis(4, end = .9)[2],
+          viridisLite::viridis(9, end = .9)[7],
+          viridisLite::viridis(9, end = 1)[9]
+        ),
+        name = "Specification"
+      )
+  )
+  dev.off()
+  
+  pdf(
+    here(
+      "fig",
+      paste0("survey_rf_", tolower(metric), "_ts_religion_south.pdf")
+    ),
+    width = width, height = height
+  )
+  print(
+    plot_temp(sets = c(1, 6, 7), colour_nrow = 3, end = 1) +
+      scale_colour_manual(
+        values = c(
+          viridisLite::viridis(9, end = 1)[1],
+          viridisLite::viridis(9, end = 1)[8],
+          viridisLite::viridis(9, end = 1)[5]
+        ),
+        name = "Specification"
+      )
+  )
+  dev.off()
+}
+
+
+
+

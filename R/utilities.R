@@ -552,3 +552,5 @@ file_suffix <- list(
   year2006 = c()
 ) %>%
   map(~ c(.x, c("house", "senate")))
+
+methods <- c("logit", "cart", "rf") %>% set_names(., .)
