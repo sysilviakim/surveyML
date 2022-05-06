@@ -21,9 +21,9 @@ tc <- trainControl(
 )
 
 ## so that files are not overwritten
-for (varset in seq(9, 14)) {
+for (varset in seq(10, 15)) {
   for (yr in setdiff(names(anes_onehot_pid), "1948")) {
-    if (varset %in% seq(9, 10)) {
+    if (varset %in% seq(10, 11)) {
       ## 7-point party ID
       temp <- anes_onehot_pid[[as.character(yr)]] %>%
         imap(
@@ -42,7 +42,7 @@ for (varset in seq(9, 14)) {
             .x
           }
         )
-    } else if (varset %in% seq(11, 12)) {
+    } else if (varset %in% seq(12, 13)) {
       ## 3-point party ID
       temp <- anes_onehot_pid[[as.character(yr)]] %>%
         imap(
@@ -86,7 +86,7 @@ for (varset in seq(9, 14)) {
     }
 
     ## set1 and set7 (comprehensive demo)
-    if (varset %% 2 == 0) {
+    if (varset %% 2 == 1) {
       temp <- temp %>%
         imap(
           ~ if (any(class(.x) == "data.frame")) {

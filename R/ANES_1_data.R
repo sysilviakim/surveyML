@@ -125,6 +125,10 @@ vl <- list(
   set8 = "VCF0804"
 )
 
+## demo. + operational ideology
+## set9 can just re-use set3
+vl$set9 <- vl$set3
+
 save(vl, file = here("data", "anes-tidy", "anes-vl.Rda"))
 
 # Sanity checks: are data present for each year? ===============================
