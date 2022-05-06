@@ -1,5 +1,6 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "variable_labels.Rda"))
+load(here("data", "anes-tidy", "anes_onehot_pid.Rda"))
 
 # Functions ====================================================================
 ## Because this is multiclass, not binary
@@ -43,19 +44,29 @@ perf_summ <- function(perf, method, set, yr) {
         )
       ) %>%
       unlist(),
-    # AUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
-    #   map_dbl(~ .x$multiclass[["AUC"]]),
+    AUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
+      map_dbl(~ .x$multiclass[["AUC"]]),
     # prAUC = perf %>% map(method) %>% map(paste0("set", set)) %>%
     #   map_dbl(~ .x$multiclass[["prAUC"]]),
+    Precision = perf %>% map(method) %>% map(paste0("set", set)) %>%
+      map_dbl(
+        ~ .x$multiclass[[
+        names(.x$multiclass)[grepl("Precision", names(.x$multiclass))]]]
+      ),
+    Recall = perf %>% map(method) %>% map(paste0("set", set)) %>%
+      map_dbl(
+        ~ .x$multiclass[[
+          names(.x$multiclass)[grepl("Recall", names(.x$multiclass))]]]
+      ),
     row.names = NULL
-  )
+  ) %>%
+    mutate(F1 = 2 * (Precision * Recall) / (Precision + Recall))
 }
 
 # Loop =========================================================================
 if (!file.exists(here("output/ANES/ANES_perf_pid.Rda"))) {
   vid <- perf <- list()
 
-  load(here("data", "anes-tidy", "anes_onehot_pid.Rda"))
   for (yr in setdiff(names(anes_onehot_pid), "1948")) {
     ## caret results
     for (method in c("logit", "cart", "rf")) {
@@ -160,8 +171,7 @@ if (!file.exists(here("output/ANES/ANES_perf_pid.Rda"))) {
 load(here("output/ANES/ANES_perf_pid.Rda"))
 load(here("output/ANES/ANES_varimp_pid.Rda"))
 
-summ_df_pid <- c("logit", "cart", "rf") %>%
-  set_names(., .) %>%
+summ_df_pid <- methods %>%
   map(
     ~ anes_sets_pid %>%
       set_names(., .) %>%
@@ -179,15 +189,21 @@ summ_df_pid <- c("logit", "cart", "rf") %>%
       mutate(
         Set = factor(Set, levels = anes_sets_pid, labels = set_labels_pid)
       ) %>%
-      rename(`Variable Specification` = Set) %>%
-      select(-Accuracy_lower, -Accuracy_upper)
+      rename(`Variable Specification` = Set)
   )
+save(summ_df_pid, file = here("output", "summ_list_pid.Rda"))
 
 # Quick check ==================================================================
 perf_df <- summ_df_pid$rf
+perf_df %>%
+  filter(`Variable Specification` == "Binary PID, Demographics Only") %>%
+  .$Accuracy %>%
+  mean()
+## [1] 0.6342
+
 set_names(set_labels_pid, set_labels_pid) %>%
   map(
-    ~ perf_df %>% 
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
       lm(Accuracy ~ Year, data = .) %>%
       summary()
@@ -195,7 +211,7 @@ set_names(set_labels_pid, set_labels_pid) %>%
 
 set_names(set_labels, set_labels) %>%
   map_dbl(
-    ~ perf_df %>% 
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
       .$Accuracy %>%
       mean()
@@ -204,11 +220,10 @@ set_names(set_labels, set_labels) %>%
 p_list <- unique(perf$`Variable Specification`) %>%
   set_names(., .) %>%
   map(
-    ~ perf %>% 
+    ~ perf %>%
       filter(`Variable Specification` == .x) %>%
-      ggplot(.) + 
+      ggplot(.) +
       geom_line(aes(x = Year, y = Accuracy))
   )
 
 vid %>% map(~ .x$rf$set7 %>% slice_max(Overall, n = 5))
-

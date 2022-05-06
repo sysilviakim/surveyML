@@ -8,13 +8,13 @@ if (!dir.exists(here("tab", "perf"))) {
 ## Extract performance measures ================================================
 if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
   vid <- perf <- list()
-  
+
   load(here("data", "anes-tidy", "anes_onehot_prez.Rda"))
   for (yr in as.character(anes_years)) {
     temp <- anes_onehot[[as.character(yr)]]
-    
+
     ## caret results
-    for (method in c("logit", "cart", "rf")) {
+    for (method in methods) {
       for (varset in anes_sets) {
         ## Load previously run results
         load(
@@ -23,7 +23,7 @@ if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
             paste0(method, "_", yr, "_st", varset, ".Rda")
           )
         )
-        
+
         ## Evaluate performance
         perf[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
           perf_routine(
@@ -32,7 +32,7 @@ if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
             temp$test,
             dv = levels(temp$test$depvar)
           )
-        
+
         ## Plot variable importance
         pdf_varimp(
           eval(parse(text = paste0("turn.", method))),
@@ -43,11 +43,11 @@ if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
           labels = vl[["anes"]],
           font = "CM Roman"
         )
-        
+
         vid_temp <- varImp(eval(parse(text = paste0("turn.", method))))
         vid[[paste0("year", yr)]][[method]][[paste0("set", varset)]] <-
           vid_temp$importance %>% Kmisc::rowid_matrix_to_df()
-        
+
         ## Save memory
         rm(list = paste0("turn.", method))
         gc(reset = TRUE)
@@ -62,8 +62,7 @@ if (!file.exists(here("output/ANES/ANES_perf.Rda"))) {
 load(here("output/ANES/ANES_perf.Rda"))
 load(here("output/ANES/ANES_varimp.Rda"))
 
-summ_df <- c("logit", "cart", "rf") %>%
-  set_names(., .) %>%
+summ_df <- methods %>%
   map(
     ~ anes_sets %>%
       set_names(., .) %>%
@@ -79,13 +78,14 @@ summ_df <- c("logit", "cart", "rf") %>%
         )
       ) %>%
       rename(`Variable Specification` = Set) %>%
-      select(-AUC_lower, -AUC_upper, -Accuracy_lower, -Accuracy_upper)
+      select(-AUC_lower, -AUC_upper)
   )
 
 summ_df %>%
   imap(
     ~ print(
       .x %>%
+        select(-Accuracy_lower, -Accuracy_upper) %>%
         xtable(
           label = paste0("tab:ANES_prezvote_", .y),
           caption = paste0(
@@ -143,9 +143,15 @@ print(
 
 # Quick check ==================================================================
 perf_df <- summ_df$rf
+perf_df %>%
+  filter(`Variable Specification` == "Demographics Only") %>%
+  .$Accuracy %>%
+  mean()
+## [1] 0.6389
+
 set_names(set_labels, set_labels) %>%
   map(
-    ~ perf_df %>% 
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
       lm(Accuracy ~ Year, data = .) %>%
       summary()
@@ -153,7 +159,7 @@ set_names(set_labels, set_labels) %>%
 
 set_names(set_labels, set_labels) %>%
   map_dbl(
-    ~ perf_df %>% 
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
       .$Accuracy %>%
       mean()
@@ -162,9 +168,9 @@ set_names(set_labels, set_labels) %>%
 p_list <- unique(perf$`Variable Specification`) %>%
   set_names(., .) %>%
   map(
-    ~ perf %>% 
+    ~ perf %>%
       filter(`Variable Specification` == .x) %>%
-      ggplot(.) + 
+      ggplot(.) +
       geom_line(aes(x = Year, y = Accuracy))
   )
 

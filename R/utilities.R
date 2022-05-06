@@ -510,19 +510,20 @@ set_labels <- c(
   "Demo. + Religion",
   "Demo. + South",
   "Demo. Only, Broader Definition",
-  "Demo. + Ideology"
+  "Demo. + Ideology",
+  "Demo. + Issues"
 )
 
 anes_years <- seq(1952, 2020, by = 4)
 cces_years <- seq(2008, 2018, by = 2)
-anes_sets <- seq(8)
+anes_sets <- seq(9)
 
 pid_labels <- c(
   "strong_democrat", "weak_democrat", "independent_democrat", "independent",
   "independent_republican", "weak_republican", "strong_republican"
 )
 
-anes_sets_pid <- seq(9, 14)
+anes_sets_pid <- seq(10, 15)
 set_labels_pid <- c(
   "7-pt PID, Demographics Only", "7-pt PID, Demo. Only, Broader Definition",
   "3-pt PID, Demographics Only", "3-pt PID, Demo. Only, Broader Definition",
@@ -552,3 +553,5 @@ file_suffix <- list(
   year2006 = c()
 ) %>%
   map(~ c(.x, c("house", "senate")))
+
+methods <- c("logit", "cart", "rf") %>% set_names(., .)
