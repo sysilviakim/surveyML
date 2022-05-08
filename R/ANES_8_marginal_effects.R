@@ -2,43 +2,76 @@ source(here::here("R", "utilities.R"))
 library(broom)
 
 # Import data ==================================================================
-anes <- read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta"))
+anes <- read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta")) %>%
+  filter(VCF0004 >= 1952)
 
 # "Traditional" logit model: prepare data ======================================
 anes_recode <- anes %>%
   transmute(
     year = VCF0004,
     votedRepublican2P = ifelse(VCF0704 == 2, 1, ifelse(VCF0704 == 1, 0, NA)),
-    votedDemocrat2P = ifelse(VCF0704 == 1, 1, ifelse(VCF0704 == 2, 0, NA)),
-    Republican = ifelse(VCF0301 %in% c(5:7), 1, ifelse(is.na(VCF0301), NA, 0)),
-    Democrat = ifelse(VCF0301 %in% c(1:3), 1, ifelse(is.na(VCF0301), NA, 0)),
+    # votedDemocrat2P = ifelse(VCF0704 == 1, 1, ifelse(VCF0704 == 2, 0, NA)),
+    Republican = case_when(
+      !is.na(VCF0301) & VCF0301 %in% seq(5, 7) ~ 1,
+      !is.na(VCF0301) & VCF0301 %in% seq(3) ~ 0
+    ),
+    # Democrat = ifelse(VCF0301 %in% c(1:3), 1, ifelse(is.na(VCF0301), NA, 0)),
     age = VCF0101,
-    female = ifelse(VCF0104 == 2, 1, 0),
-    gender_other = ifelse(VCF0104 == 3, 1, 0),
-    gender_na = ifelse(VCF0104 == 0, 1, 0),
-    white = ifelse(VCF0105b == 1, 1, 0),
-    black = ifelse(VCF0105b == 2, 1, 0),
-    hispanic = ifelse(VCF0105b == 3, 1, 0),
-    race_other = ifelse(VCF0105b == 4, 1, 0),
-    race_na = ifelse(VCF0105b == 0, 1, 0),
-    race_missing = ifelse(VCF0105b == 9, 1, 0),
-    income = VCF0114,
-    high_school = ifelse(VCF0110 == 2, 1, 0),
-    some_college = ifelse(VCF0110 == 3, 1, 0),
-    college_grad = ifelse(VCF0110 == 4, 1, 0),
-    edu_na = ifelse(VCF0110 == 0, 1, 0),
-    pid7 = VCF0301
+    gender = case_when(
+      !is.na(VCF0104) & VCF0104 == 0 ~ "na",
+      !is.na(VCF0104) & VCF0104 == 1 ~ "male",
+      !is.na(VCF0104) & VCF0104 == 2 ~ "female",
+      !is.na(VCF0104) & VCF0104 == 3 ~ "other",
+      is.na(VCF0104) ~ "missing"
+    ),
+    gender = factor(
+      gender, levels = c("na", "male", "female", "other", "missing")
+    ),
+    race = case_when(
+      !is.na(VCF0105b) & VCF0105b == 0 ~ "na",
+      !is.na(VCF0105b) & VCF0105b == 1 ~ "white",
+      !is.na(VCF0105b) & VCF0105b == 2 ~ "black",
+      !is.na(VCF0105b) & VCF0105b == 3 ~ "hispanic",
+      !is.na(VCF0105b) & VCF0105b == 4 ~ "other race",
+      !is.na(VCF0105b) & VCF0105b == 9 ~ "dk",
+      is.na(VCF0105b) ~ "missing"
+    ),
+    race = factor(
+      race, levels = c("na", "black", "white", "hispanic", "other race", "dk")
+    ),
+    income = case_when(
+      is.na(VCF0114) ~ 999,
+      TRUE ~ as.numeric(VCF0114)
+    ),
+    edu = case_when(
+      !is.na(VCF0110) & VCF0110 == 0 ~ "na",
+      !is.na(VCF0110) & VCF0110 == 1 ~ "less than high",
+      !is.na(VCF0110) & VCF0110 == 2 ~ "high school",
+      !is.na(VCF0110) & VCF0110 == 3 ~ "some college",
+      !is.na(VCF0110) & VCF0110 == 4 ~ "college or higher",
+      is.na(VCF0110) ~ "missing"
+    ),
+    edu = factor(
+      edu, levels = c(
+        "na", "less than high", "high school", "some college",
+        "college or higher"
+      )
+    )
   ) %>%
-  filter(year >= 1952)
+  filter(!is.na(age))
+
+anes_recode %>%
+  map_dbl(~ sum(is.na(.x)))
+#     year votedRepublican2P        Republican               age 
+#        0             35868              8873                 0 
+#   gender              race            income               edu 
+#        0                 0                 0                 0 
 
 estimate_model <- function(df, outcome, lpm = FALSE) {
   form <- as.formula(
     paste(
       outcome, " ~ ",
-      "age + female + black + hispanic + race_other + ", 
-      "high_school + some_college + college_grad + ",
-      "factor(income)",
-      " + gender_other + gender_na + race_na + race_missing + edu_na"
+      "age + factor(gender) + factor(race) + factor(income) + factor(edu)"
     )
   )
   if (lpm) {
@@ -50,17 +83,23 @@ estimate_model <- function(df, outcome, lpm = FALSE) {
 
 # OLS regression 1 (vote choice) ===============================================
 vote_republican <- anes_recode %>%
-  filter(!is.na(votedRepublican2P) & !is.na(income)) %>%
-  group_by(year) %>%
+  select(-Republican) %>%
+  filter(!is.na(votedRepublican2P)) %>%
+  group_by(year)
+
+assert_that(!any(is.na(vote_republican)))
+vote_republican <- vote_republican %>%
   do(tidy(estimate_model(., "votedRepublican2P", lpm = TRUE)))
 
 # OLS regression 2 (binary PID) ================================================
 identity_republican <- anes_recode %>%
-  filter(year != 1954) %>%
-  ## no data on variables such as race
-  filter(pid7 %in% seq(7)) %>%
-  filter(!is.na(Republican) & !is.na(income)) %>%
-  group_by(year) %>%
+  select(-votedRepublican2P) %>%
+  filter(!is.na(Republican)) %>%
+  filter(year != 2002) %>% ## no income
+  group_by(year)
+
+assert_that(!any(is.na(identity_republican)))
+identity_republican <- identity_republican %>%
   do(tidy(estimate_model(., "Republican", lpm = TRUE)))
 
 # Figure creation ==============================================================
@@ -74,11 +113,11 @@ p <- list(
       filter(year >= 1976) %>%
       mutate(
         term2 = case_when(
-          term == "black" ~ "Black",
-          term == "female" ~ "Woman",
-          term == "college_grad" ~ "College Graduate"
+          term == "factor(race)white" ~ "White",
+          term == "factor(gender)female" ~ "Woman",
+          term == "factor(edu)college or higher" ~ "College Graduate"
         ),
-        term2 = factor(term2, levels = c("College Graduate", "Black", "Woman"))
+        term2 = factor(term2, levels = c("College Graduate", "White", "Woman"))
       ) %>%
       filter(!is.na(term2)) %>%
       ggplot(aes(x = year, y = estimate, color = term2, shape = term2)) +
