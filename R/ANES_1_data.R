@@ -107,6 +107,12 @@ vl <- list(
   set5 = c(
     "VCF0128", ## religion major group
     "VCF0130b" ## church attendance all years
+    ## 1 = every week ---------------- regularly
+    ## 2 = almost every week --------- often
+    ## 3 = once or twice a month
+    ## 4 = a few times a year -------- seldom
+    ## 5 = never --------------------- never
+    ## 7 = no religious preference --- no religious preference
   ),
   ## demo. + south
   set6 = "VCF0113",

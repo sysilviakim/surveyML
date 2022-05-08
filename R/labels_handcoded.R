@@ -692,6 +692,11 @@ vl[["anes"]] <- c(
   "vcf0114_999" = "(Income answer missing)",
   "vcf0127_2" = "No household member in labor union",
   "vcf0127_999" = "(Household member in labor union: answer missing)",
+  "vcf01301_2" = "Church attendance: often",
+  "vcf01302_3" = "Church attendance: every now and then", ## once or twice a mon
+  "vcf01302_4" = "Church attendance: seldom",
+  "vcf01302_5" = "Church attendance: never",
+  "vcf01302_7" = "Church attendance: no religious preference",
   "vcf0301_2" = "Weak Democrat",
   "vcf0301_3" = "Independent Democrat",
   "vcf0301_4" = "Independent",
