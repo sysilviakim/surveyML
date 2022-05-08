@@ -1,33 +1,38 @@
 source(here::here("R", "utilities.R"))
 library(broom)
-library(gridExtra)
 
-# Import data
+# Import data ==================================================================
 anes <- read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta"))
 
 # "Traditional" logit model: prepare data ======================================
 anes_recode <- anes %>%
   transmute(
     year = VCF0004,
-    college_grad = ifelse(VCF0110 == 4, 1, 0),
     votedRepublican2P = ifelse(VCF0704 == 2, 1, ifelse(VCF0704 == 1, 0, NA)),
     votedDemocrat2P = ifelse(VCF0704 == 1, 1, ifelse(VCF0704 == 2, 0, NA)),
     Republican = ifelse(VCF0301 %in% c(5:7), 1, ifelse(is.na(VCF0301), NA, 0)),
     Democrat = ifelse(VCF0301 %in% c(1:3), 1, ifelse(is.na(VCF0301), NA, 0)),
+    age = VCF0101,
     female = ifelse(VCF0104 == 2, 1, 0),
     white = ifelse(VCF0105a == 1, 1, 0),
     black = ifelse(VCF0105a == 2, 1, 0),
+    hispanic = ifelse(VCF0105a == 3, 1, 0),
+    asian = ifelse(VCF0105a == 4, 1, 0),
     income = VCF0114,
-    age_group = VCF0102,
+    high_school = ifelse(VCF0110 == 2, 1, 0),
+    some_college = ifelse(VCF0110 == 3, 1, 0),
+    college_grad = ifelse(VCF0110 == 4, 1, 0),
     pid7 = VCF0301
-  )
+  ) %>%
+  filter(year >= 1952)
 
 estimate_model <- function(df, outcome, lpm = FALSE) {
   form <- as.formula(
     paste(
       outcome, " ~ ",
-      "white + black + college_grad + female + ",
-      "factor(income) + factor(age_group)"
+      "age + female + black + hispanic + asian + ", 
+      "high_school + some_college + college_grad + ",
+      "factor(income)"
     )
   )
   if (lpm) {
@@ -36,14 +41,6 @@ estimate_model <- function(df, outcome, lpm = FALSE) {
     glm(form, family = "binomial", data = df)
   }
 }
-
-vote_republican_logit <- anes_recode %>%
-  filter(!is.na(votedRepublican2P)) %>%
-  filter(year >= 1972) %>%
-  group_by(year) %>%
-  nest() %>%
-  ## These are logit coefficients
-  mutate(model = map(data, estimate_model, "votedRepublican2P"))
 
 # OLS regression 1 (vote choice) ===============================================
 vote_republican <- anes_recode %>%
@@ -71,13 +68,14 @@ p <- list(
       filter(year >= 1976) %>%
       mutate(
         term2 = case_when(
-          term == "white" ~ "White",
+          term == "black" ~ "Black",
           term == "female" ~ "Woman",
-          term == "college_grad" ~ "College graduate"
-        )
+          term == "college_grad" ~ "College Graduate"
+        ),
+        term2 = factor(term2, levels = c("College Graduate", "Black", "Woman"))
       ) %>%
       filter(!is.na(term2)) %>%
-      ggplot(aes(x = year, y = estimate, color = term, shape = term)) +
+      ggplot(aes(x = year, y = estimate, color = term2, shape = term2)) +
       geom_point(size = 2.3) +
       geom_errorbar(
         aes(
@@ -97,7 +95,7 @@ p <- list(
       ) +
       geom_hline(yintercept = 0) +
       scale_x_continuous(breaks = seq(1976, 2020, by = 4)) +
-      scale_color_manual(values = c("darkblue", "darkred", "darkorange"))
+      scale_color_manual(values = c("darkblue", "darkorange", "darkred"))
   )
 
 # Export =======================================================================
