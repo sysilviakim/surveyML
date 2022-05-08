@@ -14,14 +14,19 @@ anes_recode <- anes %>%
     Democrat = ifelse(VCF0301 %in% c(1:3), 1, ifelse(is.na(VCF0301), NA, 0)),
     age = VCF0101,
     female = ifelse(VCF0104 == 2, 1, 0),
-    white = ifelse(VCF0105a == 1, 1, 0),
-    black = ifelse(VCF0105a == 2, 1, 0),
-    hispanic = ifelse(VCF0105a == 3, 1, 0),
-    asian = ifelse(VCF0105a == 4, 1, 0),
+    gender_other = ifelse(VCF0104 == 3, 1, 0),
+    gender_na = ifelse(VCF0104 == 0, 1, 0),
+    white = ifelse(VCF0105b == 1, 1, 0),
+    black = ifelse(VCF0105b == 2, 1, 0),
+    hispanic = ifelse(VCF0105b == 3, 1, 0),
+    race_other = ifelse(VCF0105b == 4, 1, 0),
+    race_na = ifelse(VCF0105b == 0, 1, 0),
+    race_missing = ifelse(VCF0105b == 9, 1, 0),
     income = VCF0114,
     high_school = ifelse(VCF0110 == 2, 1, 0),
     some_college = ifelse(VCF0110 == 3, 1, 0),
     college_grad = ifelse(VCF0110 == 4, 1, 0),
+    edu_na = ifelse(VCF0110 == 0, 1, 0),
     pid7 = VCF0301
   ) %>%
   filter(year >= 1952)
@@ -30,9 +35,10 @@ estimate_model <- function(df, outcome, lpm = FALSE) {
   form <- as.formula(
     paste(
       outcome, " ~ ",
-      "age + female + black + hispanic + asian + ", 
+      "age + female + black + hispanic + race_other + ", 
       "high_school + some_college + college_grad + ",
-      "factor(income)"
+      "factor(income)",
+      " + gender_other + gender_na + race_na + race_missing + edu_na"
     )
   )
   if (lpm) {
