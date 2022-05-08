@@ -44,7 +44,8 @@ methods %>%
         perf_list[[.x]], "Accuracy",
         ylim = c(0, 1), name = "Outcome Variable", y2 = TRUE,
         colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE
-      )
+      ) + 
+        ylab("ANES Wave")
       p <- pdf_default(p) +
         theme(legend.position = "bottom", legend.key.width = unit(.9, "cm"))
       p
