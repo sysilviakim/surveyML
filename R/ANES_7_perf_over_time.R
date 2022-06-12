@@ -104,7 +104,7 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   )
   print(
     # https://www.datanovia.com/en/blog/the-a-z-of-rcolorbrewer-palette/
-    plot_temp(sets = c(2, 3, 8), colour_nrow = 3, end = 1) +
+    plot_temp(summ_df, sets = c(2, 3, 8), colour_nrow = 3, end = 1) +
       scale_colour_manual(
         values = c(
           # Force as the third scale in the default figure
@@ -125,7 +125,7 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
     width = width, height = height
   )
   print(
-    plot_temp(sets = c(1, 6, 7), colour_nrow = 3, end = 1) +
+    plot_temp(summ_df, sets = c(1, 5, 6), colour_nrow = 3, end = 1) +
       scale_colour_manual(
         values = c(
           viridisLite::viridis(9, end = 1)[1],
