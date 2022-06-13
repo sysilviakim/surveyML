@@ -3,13 +3,16 @@ load(here("output", "summ_list.Rda"))
 load(here("output", "summ_list_pid.Rda"))
 load(here("output/ANES/ANES_perf.Rda"))
 
+if (!dir.exists(here("tab/avg"))) {
+  dir.create(here("tab/avg"), recursive = TRUE)
+  dir.create(here("tab/reg"), recursive = TRUE)
+}
+
 # Settings =====================================================================
-width <- 6.2
-height <- 4
 plot_temp <- function(df, sets = seq(4), ...) {
   p <- pdf_default(
     po_full(
-      df[["rf"]] %>% 
+      df[["rf"]] %>%
         rename(Set = `Variable Specification`) %>%
         filter(Set %in% set_labels[sets]),
       metric = metric, vdir = 1, ...
@@ -36,6 +39,117 @@ perf_list <- methods %>%
       filter(`Variable Specification` == "Demographics Only")
   )
 
+# Average calculation/slope regression =========================================
+for (method in c("logit", "cart", "rf")) {
+  for (metric in c("Accuracy", "AUC", "F1")) {
+    for (yy in c("vote choice", "pid")) {
+      if (yy == "vote choice") {
+        input <- set_labels %>%
+          set_names(., nm = paste0("set", seq(length(set_labels))))
+      } else {
+        input <- set_labels_pid %>%
+          set_names(
+            .,
+            nm = gsub(
+              "-pt PID, Demo. Only, Broader Definition", "pid_set2",
+              gsub(
+                "-pt PID, Demographics Only", "pid_set1",
+                gsub("Binary PID", "2-pt PID", set_labels_pid)
+              )
+            )
+          )
+      }
+
+      input %>%
+        imap(
+          ~ {
+            if (yy == "vote choice") {
+              x <- summ_df[[method]] %>%
+                filter(`Variable Specification` == .x)
+            } else {
+              x <- summ_df_pid[[method]] %>%
+                filter(`Variable Specification` == .x)
+            }
+
+            ### average
+            write(
+              formatC(
+                mean(x[[metric]], na.rm = TRUE) * 100, digits = 1, format = "f"
+              ),
+              file = here(
+                "tab", "avg",
+                ifelse(
+                  yy == "vote choice",
+                  paste0(
+                    "ANES", "_avg_vote_choice_", .y, "_", tolower(metric), "_",
+                    tolower(method), ".tex"
+                  ),
+                  paste0(
+                    "ANES", "_avg_", .y, "_", tolower(metric), "_",
+                    tolower(method), ".tex"
+                  )
+                )
+              )
+            )
+
+            if (metric != "F1") {
+              ### linear regression
+              lm_out <- lm(sprintf("%s ~ Year", metric), data = x) %>%
+                broom::tidy()
+
+              c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
+                imap(
+                  function(x, y) {
+                    lm_out %>%
+                      filter(term == "Year") %>%
+                      .[[x]] %>%
+                      round(
+                        .,
+                        digits = ifelse(
+                          x == "p.value",
+                          max(
+                            2,
+                            str_match_all(
+                              formatC(., format = "e"),
+                              "-([0-9]+)"
+                            )[[1]][1, 2] %>% as.numeric()
+                          ),
+                          max(
+                            4,
+                            str_match_all(
+                              formatC(., format = "e"),
+                              "-([0-9]+)"
+                            )[[1]][1, 2] %>% as.numeric()
+                          )
+                        )
+                      ) %>%
+                      write(
+                        .,
+                        file = here(
+                          "tab", "reg",
+                          ifelse(
+                            yy == "vote choice",
+                            paste0(
+                              "ANES", "_ts_slope_vote_choice_",
+                              .y, "_", tolower(metric), 
+                              "_", tolower(method), "_", y, ".tex"
+                            ),
+                            paste0(
+                              "ANES", "_ts_slope_", .y, "_", tolower(metric),
+                              "_", tolower(method), "_", y, ".tex"
+                            )
+                          )
+                        )
+                      )
+                  }
+                )
+            }
+          }
+        )
+    }
+  }
+}
+
 # Fig 1A and 1B: Demo Accuracy, 2 y-variables ==================================
 methods %>%
   map(
@@ -44,7 +158,7 @@ methods %>%
         perf_list[[.x]], "Accuracy",
         ylim = c(0, 1), name = "Outcome Variable", y2 = TRUE,
         colour_nrow = 1, linetype_nrow = 1, end = 0.85, accrange = TRUE
-      ) + 
+      ) +
         ylab("ANES Wave")
       p <- pdf_default(p) +
         theme(legend.position = "bottom", legend.key.width = unit(.9, "cm"))
@@ -116,7 +230,7 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
       )
   )
   dev.off()
-  
+
   pdf(
     here(
       "fig",
@@ -137,7 +251,3 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   )
   dev.off()
 }
-
-
-
-
