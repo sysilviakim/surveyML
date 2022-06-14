@@ -40,6 +40,7 @@ perf_list <- methods %>%
   )
 
 # Average calculation/slope regression =========================================
+lm_list <- list()
 for (method in c("logit", "cart", "rf")) {
   for (metric in c("Accuracy", "AUC", "F1")) {
     for (yy in c("vote choice", "pid")) {
@@ -60,7 +61,8 @@ for (method in c("logit", "cart", "rf")) {
           )
       }
 
-      input %>%
+      lm_list[[yy]][[method]][[metric]] <- input %>%
+        set_names(., .) %>%
         imap(
           ~ {
             if (yy == "vote choice") {
@@ -95,13 +97,12 @@ for (method in c("logit", "cart", "rf")) {
 
             if (metric != "F1") {
               ### linear regression
-              lm_out <- lm(sprintf("%s ~ Year", metric), data = x) %>%
-                broom::tidy()
-
+              lm_out <- lm(sprintf("%s ~ Year", metric), data = x)
+              
               c(est = "estimate", se = "std.error", pvalue = "p.value") %>%
                 imap(
                   function(x, y) {
-                    lm_out %>%
+                    broom::tidy(lm_out) %>%
                       filter(term == "Year") %>%
                       .[[x]] %>%
                       round(
@@ -144,11 +145,42 @@ for (method in c("logit", "cart", "rf")) {
                       )
                   }
                 )
+              
+              return(lm_out)
             }
           }
         )
     }
   }
+}
+
+## stargazer
+for (method in c("rf", "logit")) {
+  fname <- here("tab", paste0("four_models_comparison_", method, ".tex"))
+  stargazer(
+    lm_list$`vote choice`[[method]]$Accuracy$`Demographics Only`,
+    lm_list$`vote choice`[[method]]$Accuracy$`Demo. Only, Broader Definition`,
+    lm_list$pid[[method]]$Accuracy$`Binary PID, Demographics Only`,
+    lm_list$pid[[method]]$Accuracy$`Binary PID, Demo. Only, Broader Definition`,
+    omit = "Constant", dep.var.labels.include = FALSE,
+    header = FALSE, model.numbers = FALSE,
+    column.labels = c(
+      "Vote Choice", 
+      "Vote Choice", 
+      "Party ID", 
+      paste0(
+        "Party ID \\\\ ", 
+        "& Main Demo. & Extended & Main Demo. & Extended"
+      )
+    ),
+    dep.var.caption = "Dependent Variable: Predictive Accuracy",
+    out = fname, float = FALSE, no.space = TRUE,
+    omit.stat = c("f", "ser"), star.cutoffs = c(0.05, 0.01, 0.001)
+  )
+  
+  x <- readLines(fname)
+  y <- gsub("cline", "cmidrule", gsub("hline", "midrule", x))
+  cat(y, file = fname, sep = "\n")
 }
 
 ## Special cases
