@@ -497,6 +497,9 @@ roc_comparison <- function(perf, set = 4,
 }
 
 ## Extra Setup =================================================================
+width <- 6.2
+height <- 4
+
 options(
   mc.cores = parallel::detectCores(),
   java.parameters = "-Xmx32g",
