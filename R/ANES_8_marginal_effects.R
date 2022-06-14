@@ -25,7 +25,8 @@ anes_recode <- anes %>%
       is.na(VCF0104) ~ "missing"
     ),
     gender = factor(
-      gender, levels = c("na", "male", "female", "other", "missing")
+      gender,
+      levels = c("na", "male", "female", "other", "missing")
     ),
     race = case_when(
       !is.na(VCF0105b) & VCF0105b == 0 ~ "na",
@@ -37,7 +38,8 @@ anes_recode <- anes %>%
       is.na(VCF0105b) ~ "missing"
     ),
     race = factor(
-      race, levels = c("na", "black", "white", "hispanic", "other race", "dk")
+      race,
+      levels = c("na", "black", "white", "hispanic", "other race", "dk")
     ),
     income = case_when(
       is.na(VCF0114) ~ 999,
@@ -52,7 +54,8 @@ anes_recode <- anes %>%
       is.na(VCF0110) ~ "missing"
     ),
     edu = factor(
-      edu, levels = c(
+      edu,
+      levels = c(
         "na", "less than high", "high school", "some college",
         "college or higher"
       )
@@ -62,10 +65,10 @@ anes_recode <- anes %>%
 
 anes_recode %>%
   map_dbl(~ sum(is.na(.x)))
-#     year votedRepublican2P        Republican               age 
-#        0             35868              8873                 0 
-#   gender              race            income               edu 
-#        0                 0                 0                 0 
+#     year votedRepublican2P        Republican               age
+#        0             35868              8873                 0
+#   gender              race            income               edu
+#        0                 0                 0                 0
 
 estimate_model <- function(df, outcome, lpm = FALSE) {
   form <- as.formula(
@@ -88,6 +91,17 @@ vote_republican <- anes_recode %>%
   group_by(year)
 
 assert_that(!any(is.na(vote_republican)))
+rsq_vote_republican <- vote_republican %>%
+  group_split() %>%
+  map_dfr(
+    ~ data.frame(
+      year = .$year[1],
+      rsq = summary(
+        estimate_model(., "votedRepublican2P", lpm = TRUE)
+      )$adj.r.squared
+    )
+  )
+
 vote_republican <- vote_republican %>%
   do(tidy(estimate_model(., "votedRepublican2P", lpm = TRUE)))
 
@@ -95,7 +109,8 @@ vote_republican <- vote_republican %>%
 identity_republican <- anes_recode %>%
   select(-votedRepublican2P) %>%
   filter(!is.na(Republican)) %>%
-  filter(year != 2002) %>% ## no income
+  filter(year != 2002) %>%
+  ## no income
   group_by(year)
 
 assert_that(!any(is.na(identity_republican)))
