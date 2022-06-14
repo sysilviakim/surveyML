@@ -74,7 +74,8 @@ for (method in c("logit", "cart", "rf")) {
             ### average
             write(
               formatC(
-                mean(x[[metric]], na.rm = TRUE) * 100, digits = 1, format = "f"
+                mean(x[[metric]], na.rm = TRUE) * 100,
+                digits = 1, format = "f"
               ),
               file = here(
                 "tab", "avg",
@@ -108,7 +109,7 @@ for (method in c("logit", "cart", "rf")) {
                         digits = ifelse(
                           x == "p.value",
                           max(
-                            2,
+                            4,
                             str_match_all(
                               formatC(., format = "e"),
                               "-([0-9]+)"
@@ -131,7 +132,7 @@ for (method in c("logit", "cart", "rf")) {
                             yy == "vote choice",
                             paste0(
                               "ANES", "_ts_slope_vote_choice_",
-                              .y, "_", tolower(metric), 
+                              .y, "_", tolower(metric),
                               "_", tolower(method), "_", y, ".tex"
                             ),
                             paste0(
@@ -149,6 +150,42 @@ for (method in c("logit", "cart", "rf")) {
     }
   }
 }
+
+## Special cases
+c(1960, 1972, 2000, 2008) %>%
+  map(
+    ~ {
+      x <- summ_df$rf %>%
+        filter(`Variable Specification` == "Demographics Only" & Year == .x) %>%
+        .$Accuracy
+      write(
+        formatC(x * 100, digits = 1, format = "f"),
+        file = here(
+          "tab", "avg", paste0("ANES_", .x, "_vote_choice_accuracy_set1.tex")
+        )
+      )
+    }
+  )
+
+## Relative improvement
+temp <- summ_df$rf %>%
+  rename(spec = `Variable Specification`) %>%
+  group_by(spec) %>%
+  summarise(Accuracy = mean(Accuracy))
+
+seq(3, 4) %>%
+  map(
+    ~ write(
+      formatC(
+        mean(temp$Accuracy[.x] - temp$Accuracy[2], na.rm = TRUE) * 100,
+        digits = 1, format = "f"
+      ),
+      file = here(
+        "tab", "avg",
+        paste0("ANES_avg_vote_choice_set", .x, "_relative_to_set2_accuracy.tex")
+      )
+    )
+  )
 
 # Fig 1A and 1B: Demo Accuracy, 2 y-variables ==================================
 methods %>%
