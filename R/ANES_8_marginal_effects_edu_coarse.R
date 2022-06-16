@@ -1,6 +1,6 @@
 source(here::here("R", "utilities.R"))
 library(broom)
-
+ 
 # Import data ==================================================================
 anes <- haven::read_dta(here("data/anes/anes_timeseries_cdf_stata_20211118.dta")) %>%
   filter(VCF0004 >= 1952)
