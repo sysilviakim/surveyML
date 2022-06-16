@@ -223,7 +223,7 @@ p_logit <- list(
       facet_wrap(~term2) +
       labs(
         color = "", shape = "",
-        y = "Estimated Marginal Effect of\nSelected Demographics",
+        y = "Estimated Logit Coefficient on Selected Demographics",
         x = "ANES Wave",
         subtitle = case_when(
           .y == "vote" ~ "Predicting Republican Two-party Vote Choice",
