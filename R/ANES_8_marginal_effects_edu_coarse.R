@@ -18,7 +18,7 @@ anes_recode <- anes %>%
     # Democrat = ifelse(VCF0301 %in% c(1:3), 1, ifelse(is.na(VCF0301), NA, 0)),
     age = VCF0101,
     gender = case_when(
-      #!is.na(VCF0104) & VCF0104 == 0 ~ "na",
+      !is.na(VCF0104) & VCF0104 == 0 ~ "na",
       !is.na(VCF0104) & VCF0104 == 1 ~ "male",
       !is.na(VCF0104) & VCF0104 == 2 ~ "female",
       !is.na(VCF0104) & VCF0104 == 3 ~ "other",
@@ -27,6 +27,7 @@ anes_recode <- anes %>%
     gender = factor(
       gender, levels = c("na", "male", "female", "other", "missing")
     ),
+    gender = relevel(gender,ref="male"),
     race = case_when(
       !is.na(VCF0105b) & VCF0105b == 0 ~ "na",
       !is.na(VCF0105b) & VCF0105b == 1 ~ "white",
@@ -46,8 +47,9 @@ anes_recode <- anes %>%
     edu_coarse = case_when(
       !is.na(VCF0110) & VCF0110 == 4 ~ "Univ. graduate+",
       !is.na(VCF0110) & VCF0110 %in% seq(3) ~ "Non-college"
-      #!is.na(VCF0110) & VCF0110 == 0 ~ "na",
+      !is.na(VCF0110) & VCF0110 == 0 ~ "Non-college",
     ),
+    edu_coarse = relevel(edu_coarse,ref="male"),
     edu = case_when(
       !is.na(VCF0110) & VCF0110 == 0 ~ "na",
       !is.na(VCF0110) & VCF0110 == 1 ~ "less than high",
@@ -64,6 +66,8 @@ anes_recode <- anes %>%
     )
   ) %>%
   filter(!is.na(age))
+
+
 
 anes_recode %>%
   map_dbl(~ sum(is.na(.x)))
@@ -170,14 +174,14 @@ p <- list(
 pdf(here("fig", "marginal_effects_lpm_edu_coarse.pdf"), width = 7, height = 6)
 print(
   ggpubr::ggarrange(
-    plot_nolegend(pdf_default(p$vote)) +
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p$vote)) +
       theme(
         legend.position = "none",
         text = element_text(size = 13)
       ) +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
       xlab(""),
-    plot_nolegend(pdf_default(p$pid)) +
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p$pid)) +
       theme(
         legend.position = "none",
         text = element_text(size = 13)
@@ -230,3 +234,26 @@ p_logit <- list(
       scale_x_continuous(breaks = seq(1976, 2020, by = 4)) +
       scale_color_manual(values = c("darkblue", "darkorange", "darkred"))
   )
+
+
+# Export logit figure ==============================================================
+pdf(here("fig", "marginal_effects_lpm_edu_coarse_logit.pdf"), width = 7, height = 6)
+print(
+  ggpubr::ggarrange(
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p_logit$vote)) +
+      theme(
+        legend.position = "none",
+        text = element_text(size = 13)
+      ) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      xlab(""),
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p_logit$pid)) +
+      theme(
+        legend.position = "none",
+        text = element_text(size = 13)
+      ) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)),
+    nrow = 2
+  )
+)
+dev.off()
