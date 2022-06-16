@@ -29,6 +29,7 @@ anes_recode <- anes %>%
       gender,
       levels = c("na", "male", "female", "other", "missing")
     ),
+    gender = relevel(gender, ref = "male"),
     race = case_when(
       !is.na(VCF0105b) & VCF0105b == 0 ~ "na",
       !is.na(VCF0105b) & VCF0105b == 1 ~ "white",
@@ -48,8 +49,10 @@ anes_recode <- anes %>%
     ),
     edu_coarse = case_when(
       !is.na(VCF0110) & VCF0110 == 4 ~ "Univ. graduate+",
-      !is.na(VCF0110) & VCF0110 <= 3 ~ "Non-college"
+      !is.na(VCF0110) & VCF0110 %in% seq(3) ~ "Non-college",
+      !is.na(VCF0110) & VCF0110 == 0 ~ "Non-college"
     ),
+    edu_coarse = relevel(edu_coarse, ref = "male"),
     edu = case_when(
       !is.na(VCF0110) & VCF0110 == 0 ~ "na",
       !is.na(VCF0110) & VCF0110 == 1 ~ "less than high",
@@ -68,12 +71,14 @@ anes_recode <- anes %>%
   ) %>%
   filter(!is.na(age))
 
+
+
 anes_recode %>%
   map_dbl(~ sum(is.na(.x)))
 #     year votedRepublican2P        Republican               age
 #        0             35868              8873                 0
-#   gender              race            income               edu
-#        0                 0                 0                 0
+#   gender              race            income               edu_coarse
+#        208                 0                 0                 714
 
 estimate_model <- function(df, outcome, lpm = FALSE) {
   form <- as.formula(
@@ -110,6 +115,22 @@ identity_republican <- anes_recode %>%
 assert_that(!any(is.na(identity_republican)))
 identity_republican <- identity_republican %>%
   do(tidy(estimate_model(., "Republican", lpm = TRUE)))
+
+# Logit regression 1 (vote choice) ===============================================
+vote_republican_logit <- anes_recode %>%
+  select(-Republican) %>%
+  filter(!is.na(votedRepublican2P)) %>%
+  group_by(year) %>%
+  do(tidy(estimate_model(., "votedRepublican2P", lpm = FALSE)))
+
+# Logit regression 2 (binary PID) ================================================
+identity_republican_logit <- anes_recode %>%
+  select(-votedRepublican2P) %>%
+  filter(!is.na(Republican)) %>%
+  filter(year != 2002) %>%
+  ## no income
+  group_by(year) %>%
+  do(tidy(estimate_model(., "Republican", lpm = FALSE)))
 
 # Figure creation ==============================================================
 p <- list(
@@ -153,18 +174,86 @@ p <- list(
       scale_color_manual(values = c("darkblue", "darkorange", "darkred"))
   )
 
+
+
 # Export =======================================================================
 pdf(here("fig", "marginal_effects_lpm_edu_coarse.pdf"), width = 7, height = 6)
 print(
   ggpubr::ggarrange(
-    plot_nolegend(pdf_default(p$vote)) +
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p$vote)) +
       theme(
         legend.position = "none",
         text = element_text(size = 13)
       ) +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
       xlab(""),
-    plot_nolegend(pdf_default(p$pid)) +
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p$pid)) +
+      theme(
+        legend.position = "none",
+        text = element_text(size = 13)
+      ) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)),
+    nrow = 2
+  )
+)
+dev.off()
+
+
+# Figure logit creation ==============================================================
+p_logit <- list(
+  vote = vote_republican_logit,
+  pid = identity_republican_logit
+) %>%
+  imap(
+    ~ .x %>%
+      ## For readability
+      filter(year >= 1976) %>%
+      mutate(
+        term2 = case_when(
+          term == "factor(race)white" ~ "White",
+          term == "factor(gender)female" ~ "Woman",
+          term == "factor(edu_coarse)Univ. graduate+" ~ "College Graduate"
+        ),
+        term2 = factor(term2, levels = c("College Graduate", "White", "Woman"))
+      ) %>%
+      filter(!is.na(term2)) %>%
+      ggplot(aes(x = year, y = estimate, color = term2, shape = term2)) +
+      geom_point(size = 2.3) +
+      geom_errorbar(
+        aes(
+          ymax = estimate + 1.96 * std.error,
+          ymin = estimate - 1.96 * std.error
+        ),
+        width = .3
+      ) +
+      facet_wrap(~term2) +
+      labs(
+        color = "", shape = "",
+        y = "Estimated Logit Coefficient on Selected Demographics",
+        x = "ANES Wave",
+        subtitle = case_when(
+          .y == "vote" ~ "Predicting Republican Two-party Vote Choice",
+          .y == "pid" ~ "Predicting Republican Party ID"
+        )
+      ) +
+      geom_hline(yintercept = 0) +
+      scale_x_continuous(breaks = seq(1976, 2020, by = 4)) +
+      scale_color_manual(values = c("darkblue", "darkorange", "darkred"))
+  )
+
+
+# Export logit figure ==============================================================
+pdf(here("fig", "marginal_effects_lpm_edu_coarse_logit.pdf"), width = 7, height = 6)
+print(
+  ggpubr::ggarrange(
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p_logit$vote)) +
+      theme(
+        legend.position = "none",
+        text = element_text(size = 13)
+      ) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      xlab(""),
+    Kmisc::plot_nolegend(Kmisc::pdf_default(p_logit$pid)) +
       theme(
         legend.position = "none",
         text = element_text(size = 13)
