@@ -162,7 +162,7 @@ for (method in c("rf", "logit")) {
     lm_list$pid[[method]]$Accuracy$`2pid_set1`,
     lm_list$pid[[method]]$Accuracy$`2pid_set2`,
     omit = "Constant", dep.var.labels.include = FALSE,
-    header = FALSE, model.numbers = FALSE,
+    header = FALSE, model.numbers = FALSE, digits.extra = 3,
     column.labels = c(
       "Vote Choice", 
       "Vote Choice", 
