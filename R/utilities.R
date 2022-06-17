@@ -25,6 +25,7 @@ library(doParallel)
 library(ranger) ## Added from Jan's code
 library(randomForestExplainer) ## Added from Jan's code
 library(Kmisc) ## devtools::install_github("sysilviakim/Kmisc")
+library(stargazer)
 library(xtable)
 
 ## Functions ===================================================================

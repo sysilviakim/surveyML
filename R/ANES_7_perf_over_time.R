@@ -175,7 +175,7 @@ for (method in c("rf", "logit")) {
     ),
     dep.var.caption = "Dependent Variable: Predictive Accuracy",
     out = fname, float = FALSE, no.space = TRUE,
-    omit.stat = c("f", "ser"), star.cutoffs = c(0.05, 0.01, 0.001)
+    omit.stat = c("f", "ser", "rsq"), star.cutoffs = c(0.05, 0.01, 0.001)
   )
   
   x <- readLines(fname)
@@ -280,6 +280,7 @@ anes_sets %>%
   )
 
 # SI figures (alternative demo. only) ==========================================
+## beware hardcoding
 for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   pdf(
     here("fig", paste0("survey_rf_", tolower(metric), "_ts_pid_ideology.pdf")),
@@ -287,13 +288,13 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   )
   print(
     # https://www.datanovia.com/en/blog/the-a-z-of-rcolorbrewer-palette/
-    plot_temp(summ_df, sets = c(2, 3, 8), colour_nrow = 3, end = 1) +
+    plot_temp(summ_df, sets = c(2, 8, 9), colour_nrow = 3, end = 1) +
       scale_colour_manual(
         values = c(
           # Force as the third scale in the default figure
-          viridisLite::viridis(4, end = .9)[2],
-          viridisLite::viridis(9, end = .9)[7],
-          viridisLite::viridis(9, end = 1)[9]
+          viridisLite::viridis(4, end = .9)[2], ## demo. + pid
+          viridisLite::viridis(9, end = .9)[8], ## demo. + ideology
+          viridisLite::viridis(9, end = 1)[9] ## demo. + issues
         ),
         name = "Specification"
       )
@@ -303,17 +304,16 @@ for (metric in c("Accuracy", "AUC", "Precision", "Recall", "F1")) {
   pdf(
     here(
       "fig",
-      paste0("survey_rf_", tolower(metric), "_ts_religion_south.pdf")
+      paste0("survey_rf_", tolower(metric), "_ts_demo_extended.pdf")
     ),
     width = width, height = height
   )
   print(
-    plot_temp(summ_df, sets = c(1, 5, 6), colour_nrow = 3, end = 1) +
+    plot_temp(summ_df, sets = c(1, 8), colour_nrow = 3, end = 1) +
       scale_colour_manual(
         values = c(
-          viridisLite::viridis(9, end = 1)[1],
-          viridisLite::viridis(9, end = 1)[8],
-          viridisLite::viridis(9, end = 1)[5]
+          viridisLite::viridis(9, end = 1)[1], ## demo.
+          viridisLite::viridis(9, end = 1)[8] ## demo. comprehensive
         ),
         name = "Specification"
       )

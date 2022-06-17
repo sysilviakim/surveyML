@@ -78,7 +78,9 @@ summ_df <- methods %>%
         )
       ) %>%
       rename(`Variable Specification` = Set) %>%
-      select(-AUC_lower, -AUC_upper)
+      select(-AUC_lower, -AUC_upper) %>%
+      ## ideology not available in cumulative file until 1972
+      filter(!(`Variable Specification` == "Demo. + Ideology" & Year < 1972))
   )
 
 summ_df %>%
@@ -165,13 +167,11 @@ set_names(set_labels, set_labels) %>%
       mean()
   )
 
-p_list <- unique(perf$`Variable Specification`) %>%
+p_list <- unique(perf_df$`Variable Specification`) %>%
   set_names(., .) %>%
   map(
-    ~ perf %>%
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
       ggplot(.) +
       geom_line(aes(x = Year, y = Accuracy))
   )
-
-vid %>% map(~ .x$rf$set7 %>% slice_max(Overall, n = 5))

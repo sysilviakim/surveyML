@@ -70,8 +70,8 @@ if (!file.exists(here("output/ANES/ANES_perf_pid.Rda"))) {
   for (yr in setdiff(names(anes_onehot_pid), "1948")) {
     ## caret results
     for (method in c("logit", "cart", "rf")) {
-      for (varset in c(13, 14)) {
-        if (varset %in% seq(9, 10)) {
+      for (varset in anes_sets_pid) {
+        if (varset %in% seq(10, 11)) {
           temp <- anes_onehot_pid[[as.character(yr)]] %>%
             imap(
               ~ if (any(class(.x) == "data.frame")) {
@@ -89,7 +89,7 @@ if (!file.exists(here("output/ANES/ANES_perf_pid.Rda"))) {
                 .x
               }
             )
-        } else if (varset %in% seq(11, 12)) {
+        } else if (varset %in% seq(12, 13)) {
           temp <- anes_onehot_pid[[as.character(yr)]] %>%
             imap(
               ~ if (any(class(.x) == "data.frame")) {
@@ -217,13 +217,11 @@ set_names(set_labels, set_labels) %>%
       mean()
   )
 
-p_list <- unique(perf$`Variable Specification`) %>%
+p_list <- unique(perf_df$`Variable Specification`) %>%
   set_names(., .) %>%
   map(
-    ~ perf %>%
+    ~ perf_df %>%
       filter(`Variable Specification` == .x) %>%
-      ggplot(.) +
+      ggplot() +
       geom_line(aes(x = Year, y = Accuracy))
   )
-
-vid %>% map(~ .x$rf$set7 %>% slice_max(Overall, n = 5))

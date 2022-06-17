@@ -21,7 +21,7 @@ tc <- trainControl(
 )
 
 ## so that files are not overwritten
-for (varset in seq(10, 15)) {
+for (varset in anes_sets_pid) {
   for (yr in setdiff(names(anes_onehot_pid), "1948")) {
     if (varset %in% seq(10, 11)) {
       ## 7-point party ID
@@ -135,17 +135,5 @@ for (varset in seq(10, 15)) {
     rm(turn.rf)
     gc(reset = TRUE)
     message("Random Forests finished.")
-
-    ## Ordered choice, MASS polr (logistic)
-    # if (varset < 13) {
-    #   method <- "ol"
-    #   turn.ol <- train_1line(temp, method = method, tc = tc, metric = "prAUC")
-    #   save(turn.ol, file = file_path_fxn(data = "ANES", pid = TRUE))
-    #   rm(turn.ol)
-    #   gc(reset = TRUE)
-    #   message("Random Forests finished.")
-    # }
-    ## initial value in 'vmmin' is not finiteError in
-    ## starting varset 12 yr 1968
   }
 }
