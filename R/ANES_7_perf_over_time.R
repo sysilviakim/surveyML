@@ -62,7 +62,6 @@ for (method in c("logit", "cart", "rf")) {
       }
 
       lm_list[[yy]][[method]][[metric]] <- input %>%
-        set_names(., .) %>%
         imap(
           ~ {
             if (yy == "vote choice") {
@@ -158,10 +157,10 @@ for (method in c("logit", "cart", "rf")) {
 for (method in c("rf", "logit")) {
   fname <- here("tab", paste0("four_models_comparison_", method, ".tex"))
   stargazer(
-    lm_list$`vote choice`[[method]]$Accuracy$`Demographics Only`,
-    lm_list$`vote choice`[[method]]$Accuracy$`Demo. Only, Broader Definition`,
-    lm_list$pid[[method]]$Accuracy$`Binary PID, Demographics Only`,
-    lm_list$pid[[method]]$Accuracy$`Binary PID, Demo. Only, Broader Definition`,
+    lm_list$`vote choice`[[method]]$Accuracy$set1,
+    lm_list$`vote choice`[[method]]$Accuracy$set7,
+    lm_list$pid[[method]]$Accuracy$`2pid_set1`,
+    lm_list$pid[[method]]$Accuracy$`2pid_set2`,
     omit = "Constant", dep.var.labels.include = FALSE,
     header = FALSE, model.numbers = FALSE,
     column.labels = c(
