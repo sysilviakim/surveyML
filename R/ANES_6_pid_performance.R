@@ -191,7 +191,69 @@ summ_df_pid <- methods %>%
       ) %>%
       rename(`Variable Specification` = Set)
   )
+
+summ_df_pid %>%
+  imap(
+    ~ print(
+      .x %>%
+        select(-Accuracy_lower, -Accuracy_upper) %>%
+        xtable(
+          label = paste0("tab:ANES_pid_", .y),
+          caption = paste0(
+            "Performance Metrics, Partisan AFfiliation, ",
+            ifelse(
+              .y == "logit", "Logit, ",
+              ifelse(.y == "cart", "CART, ", "Random Forests, ")
+            ),
+            "ANES 1952--2020"
+          ),
+          digits = c(0, 0, 0, 4, 4, 4, 4, 4, 4)
+        ),
+      include.rownames = FALSE,
+      file = here(
+        "tab", "perf", paste0("ANES_", .y, "_pid.tex")
+      ),
+      booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
+    )
+  )
 save(summ_df_pid, file = here("output", "summ_list_pid.Rda"))
+
+# Alternative, just accuracy between methods ===================================
+tab <- c("logit", "cart", "rf") %>%
+  map(
+    ~ anes_sets_pid %>%
+      set_names(., .) %>%
+      map_dfr(
+        function(x) {
+          perf_summ(
+            perf, .x, x, yr = as.numeric(gsub("year", "", names(perf)))) %>%
+            select(Year, !!as.name(.x) := CI) %>%
+            mutate(Set = x)
+        }
+      ) %>%
+      select(Set, everything()) %>%
+      arrange(desc(Year), Set) %>%
+      mutate(
+        Set = factor(Set, levels = anes_sets_pid, labels = set_labels_pid)
+      ) %>%
+      rename(`Variable Specification` = Set)
+  ) %>%
+  Reduce(left_join, .) %>%
+  rename(Logit = logit, CART = cart, RF = rf) %>%
+  xtable(
+    label = paste0("tab:ANES_pid_accuracy"),
+    caption = paste0(
+      "Accuracy Range Comparison, ", "Partisan Affiliation, ",
+      "ANES 1952--2020"
+    ),
+    digits = 0
+  )
+print(
+  tab,
+  include.rownames = FALSE,
+  file = here("tab", "perf", paste0("ANES_pid_accuracy.tex")),
+  booktabs = TRUE, floating = FALSE, tabular.environment = "longtable"
+)
 
 # Quick check ==================================================================
 perf_df <- summ_df_pid$rf
