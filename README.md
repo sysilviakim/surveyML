@@ -1,3 +1,3 @@
 # surveyML
 
-This repository contains reproducible code for Kim and Zilinsky (2021), *The Divided (But Not More Predictable) Electorate: A Machine Learning Analysis of Voting in American Presidential Elections*. APSA preprint is available [here](https://doi.org/10.33774/apsa-2021-45w3m).
+This repository contains reproducible code for Kim, Seo-young Silvia, and Jan Zilinsky. 2022. [“Division Does Not Imply Predictability: Demographics Continue to Reveal Little About Voting and Partisanship.”](https://link.springer.com/article/10.1007/s11109-022-09816-z) Political Behavior. Published online Aug 2022.
